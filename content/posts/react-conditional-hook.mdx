@@ -1,5 +1,4 @@
 ---
-icon: 🤷‍♀️
 title: React Hook은 조건부로 쓰일 수 있을까
 date: 2024-03-03
 category: Brief-Dive
@@ -49,9 +48,8 @@ export default function App() {
 
   return (
     <div className="App">
-            <h1>안녕 리액트 훅</h1>      <button onClick={toggle}>
-        {on ? "ON" : "OFF"}
-      </button>   {" "}
+            <h1>안녕 리액트 훅</h1>     {" "}
+      <button onClick={toggle}>{on ? "ON" : "OFF"}</button>   {" "}
     </div>
   );
 }
@@ -84,9 +82,8 @@ export default function App() {
     <AppContext.Provider value={on}>
            {" "}
       <div className="App">
-                <h1>안녕 리액트 훅</h1>        <button onClick={toggle}>
-          {on ? "ON" : "OFF"}
-        </button>     {" "}
+                <h1>안녕 리액트 훅</h1>       {" "}
+        <button onClick={toggle}>{on ? "ON" : "OFF"}</button>     {" "}
       </div>
             <Test on={on} />   {" "}
     </AppContext.Provider>
@@ -121,11 +118,9 @@ export default function App() {
 
   return (
     <div className="App">
-            <h1>안녕 리액트 훅</h1>      <button onClick={toggle}>
-        {on ? "ON" : "OFF"}
-      </button>      <div>my name is {name}</div>      <div>
-        my age is {age}
-      </div>   {" "}
+            <h1>안녕 리액트 훅</h1>     {" "}
+      <button onClick={toggle}>{on ? "ON" : "OFF"}</button>     {" "}
+      <div>my name is {name}</div>      <div>my age is {age}</div>   {" "}
     </div>
   );
 }
