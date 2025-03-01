@@ -4,6 +4,7 @@ import { Inter, Fira_Code } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@/components/analytics";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Metadata } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
 const firaCode = Fira_Code({
@@ -11,16 +12,13 @@ const firaCode = Fira_Code({
   variable: "--font-fira-code",
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "stevy.dev",
-  description: "프론트엔드 개발을 하고 있는 스티비의 블로그",
-  icons: {
-    icon: "/favicon.ico",
-  },
+  description: "프론트엔드 개발을 하고 있는 스티비의 블로그입니다",
   openGraph: {
     images: [
       {
-        url: "/profile.png",
+        url: "/images/profile.png",
       },
     ],
   },
