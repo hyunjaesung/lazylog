@@ -22,7 +22,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:col-span-2 mt-4">
-                  <h2 className="h-[64px] line-clamp-2 font-semibold tracking-tighter text-primary text-xl md:text-2xl">
+                  <h2 className="md:h-[64px] md:line-clamp-2 line-clamp-1 font-semibold tracking-tighter text-primary text-xl md:text-2xl">
                     {post.title}
                   </h2>
                   <div className="prose lg:prose-lg leading-relaxed md:text-lg line-clamp-4 text-muted-foreground">
