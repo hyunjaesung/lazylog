@@ -14,6 +14,16 @@ const firaCode = Fira_Code({
 export const metadata = {
   title: "stevy.dev",
   description: "프론트엔드 개발을 하고 있는 스티비의 블로그",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    images: [
+      {
+        url: "/profile.png",
+      },
+    ],
+  },
 };
 
 interface RootLayoutProps {
