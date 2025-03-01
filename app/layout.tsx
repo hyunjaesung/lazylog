@@ -23,8 +23,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
         className={`antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 ${inter.className}`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="max-w-2xl mx-auto py-10 px-4">
-            <header className="mb-10">
+          <div className="flex flex-col items-center max-w-4xl mx-auto py-10 px-4">
+            <header className="mb-10 w-full">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">
                   <Link href="/">stevy.dev</Link>
