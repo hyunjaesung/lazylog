@@ -20,7 +20,7 @@ description: 웹 성능 최적화 개요 및 지표, 초기 설정, 데이터 �
 
 &nbsp; 고전적으로는 `DOMContentLoaded 이벤트` 이나 `Load 이벤트` 의 시점이 빠르다거나 `DOMContentLoaded이벤트` 와 `Load 이벤트` 사이의 시간이 짧은 것을 처리시간이 빠르므로 웹 프론트앤드 성능이 좋다고 여겼다.
 
-![Dom 이벤트](./images/Dom.png)
+<Image src="/images/Dom.png" alt="Dom 이벤트" width={500} height={500} />
 
 &nbsp; 현대의 웹 브라우저 환경은 앞선 로드 이벤트와 상관 없이 DOM 생성을 최대한 빨리하고 블로킹을 일으키는 복잡한 스크립트 로직은 비동기적으로 처리하고 있다. SPA 라이브러리 같은 경우도 상당히 연산이 심하기 때문에 비동기적으로 스크립트가 실행 된다 ( 참고 : [DOMContentLoaded, load, beforeunload, unload 이벤트](https://www.notion.so/DOMContentLoaded-load-beforeunload-unload-7bd0d60f6a70437b9d87f391ec017530) ) 최근의 성능 측정에서는 사용자가 직접 느끼는 부분을 중요시 하기 때문에 다음과 같은 사용자 기준으로 성능을 측정한다.
 
@@ -127,13 +127,13 @@ description: 웹 성능 최적화 개요 및 지표, 초기 설정, 데이터 �
 
 &nbsp; `JPEG` 대신 `WebP` 사용하면 평균 20 30 프로 정도 크기 감소를 시킬 수 있다. (참고 : [나무위키 WebP](https://namu.wiki/w/WebP)) `WebP` 를 지원 안하는 구버전 브라우저도 있기 때문에 점진적으로 대응하는게 좋다.
 
-![webp](./images/webp.png)
+<Image src="/images/webp.png" alt="webp" width={500} height={500} />
 
 ### 이미지 스프라이트
 
 &nbsp; 이미지 스프라이트는 여러 개 이미지를 하나로 만들고, CSS의 `background-position` 속성을 사용해 부분 이미지를 사용하는 방법이다. 아래 이미지와 같은 아이콘들을 8번 호출해서 가져 오는게 아니라 한번 호출해서 잘라서 사용하면 호출 횟수를 줄일 수 있다.
 
-![imagesplit](./images/imagesplit.png)
+<Image src="/images/imagesplit.png" alt="imagesplit" width={500} height={500} />
 
 ### Base64 대체
 

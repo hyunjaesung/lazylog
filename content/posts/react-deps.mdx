@@ -6,6 +6,13 @@ image: /images/react-deps.webp
 description: useEffect의 의존성 배열에는 useRef의 current 값을 넣지 말아야 한다.
 ---
 
+<Image
+  src="/images/react-deps.webp"
+  alt="React Hook"
+  width={500}
+  height={500}
+/>
+
 최근 동료 분이 useEffect의 의존성 배열에는 useRef의 값이 들어가면 안된다고 코드 리뷰를 해주셨다. 하지만 분명 useRef의 current값이 들어갈 때와 안 들어갈 때가 차이가 있었다. 그 차이를 인식하고 해당 방법으로 구현을 했기에 혼란스러웠다. 아래 예제를 보자
 
 ### useRef 값을 의존성 배열을 넣으면 분명 차이가 있긴하다
@@ -41,7 +48,7 @@ const App = () => {
 export default App;
 ```
 
-![예제1](./images/def-example1.gif)
+<Image src="/images/def-example1.gif" alt="예제1" width={500} height={500} />
 
 ```jsx
 
@@ -62,7 +69,7 @@ export default App
 
 ```
 
-![예제2](./images/def-example2.gif)
+<Image src="/images/def-example2.gif" alt="예제2" width={500} height={500} />
 
 위 예제와 같이 useRef를 의존성 배열에 넣은 경우에는 다른 trigger에 의해 해당 컴포넌트가 재호출 되었을 때 useRef를 의존성 배열에 넣은 effect가 실행이 된다. 반면, 의존성 배열에 넣지 않은 effect는 실행되지 않는다. 분명 동작의 차이는 있다. 하지만 이것은 React가 바라지 않는 사이드 이펙트다.
 
@@ -112,11 +119,11 @@ const App = () => {
 export default App;
 ```
 
-![예제3](./images/def2-example1.gif)
+<Image src="/images/def2-example1.gif" alt="예제3" width={500} height={500} />
 
 위의 예제 같은 경우에는 ref.current가 의존성 배열에 있어야 원하는 사이드 이펙트가 생기는 예제이다. setState -> setTitle -> ref.current 변경으로 이어지는 과정으로 API호출이 완료되고 title이 설정되면 스타일 변경을 해서 원하는 렌더를 만들어낸다. 의존성 배열에 없다면 아래와 같이 style이 바뀌지 않는다.
 
-![예제4](./images/def2-example2.gif)
+<Image src="/images/def2-example2.gif" alt="예제4" width={500} height={500} />
 
 이를 리액트가 권고하는 방법으로 다시 써보자 간단히 useRef 쓰는 부분을 재호출을 trigger하는 useState로 바꿔서 쓰면 된다.
 

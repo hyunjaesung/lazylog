@@ -6,6 +6,13 @@ image: /images/reactstate.webp
 description: 리액트 상태 관리의 역사와 문제점을 분석하고, Redux, Context API, Recoil 등의 대안을 비교하며 최적의 상태 관리 방법을 탐구한다.
 ---
 
+<Image
+  src="/images/reactstate.webp"
+  alt="리액트 상태"
+  width={500}
+  height={500}
+/>
+
 &nbsp; 리액트 상태 관리를 어떻게 하냐에 따라 의미 없는 리렌더 등 성능 이슈가 생길 수 있고 어떤 상태 라이브러리를 쓰며 어떤 구조로 상태를 설계해서 다루냐에 따라서 유지보수 관점에서 코드의 라이프 사이클이 크게 짧아질 수도 길어 질 수도 있다. 상태 설계는 만드는 개발자마다 중요하게 생각하는 지점이 갈릴 수 도 있고 한번 설계되면 프로젝트를 새로 만들지 않는 이상 고치기가 쉽지 않아서 깊은 고려를 하고 시작해야 되는 부분이다. 전역 상태 라이브러리로 `Redux`가 여전히 대세로 쓰이고 있고 많은 프로젝트에서 전역 상태가 무분별하게 사용되고 있다. 점차 전역 상태 라이브러리를 안쓰는 게 좋다는 흐름이 생기고 있고 리액트 팀에서는 `Recoil`을 만들어서 기존의 전역 상태 라이브러리를 대체 하려고 하고 있다. 리액트의 상태 관리가 어떻게 진행되어 왔고 어떻게 진행 되려고 하고 있는지 또, 어떤 식으로 설계되는게 추천 되는지 써보려고 한다.
 
 ## 리액트 상태란 뭘까
@@ -22,21 +29,26 @@ description: 리액트 상태 관리의 역사와 문제점을 분석하고, Red
 
 &nbsp; 기존의 UI 상태 관리는 `MVC (Model-View-Controller) 설계`를 써서 UI 를 관리 했었다. `양방향` 데이터 흐름을 가지고 있었기 때문에 `모델` 상태가 바뀌면 `뷰`가 바뀌며 `뷰`에서 변경이 일어난다면 다시 `모델` 상태가 바뀌며 `컨트롤러`가 이를 조작했다. `모델`하나에 의존되는 `뷰`가 많아지면 많아 질수록 `컨트롤러`의 복잡도는 더 올라갔고 최신 프론트 웹 개발 트렌드에서 UI 인터렉션이 많아지면서 `MVC 설계`는 관리가 불가능한 구조가 되었다.
 
-![MVC](./images/MVC.png)
+<Image src="/images/MVC.png" alt="MVC" width={500} height={500} />
 
 &nbsp; 2013년, `MVC` 어플리케이션이 가지는 복잡도를 해결하기 위해 `단방향` 데이터 흐름을 가지는`리액트`를 릴리즈 하게 된다. 이때는 전역 상태 라이브러리가 존재 하지 않았기 때문에 상위 컴포넌트에서 `State`를 선언하고 하위 컴포넌트로 `Props`로 내려주면서 관리 했다. 어플리케이션이 커지면서 점차 래핑되는 컴포넌트도 많았고 `State`를 전달하기위해서 중간에 있는 관계없는 중간 컴포넌트까지 지나가면서 `State`를 `Props`로 전달했다. (이런 문제를 [Prop Drilling](https://kentcdodds.com/blog/prop-drilling) 이라고 부른다)
 
-![PropDrilling](./images/propdrill.png)
+<Image
+  src="/images/propdrill.png"
+  alt="PropDrilling"
+  width={500}
+  height={500}
+/>
 
 &nbsp; 2014년, 페이스북은`MVC 패턴`의 대안으로 `단방향`으로 데이터 흐름 진행되는 `Flux 패턴`을 공개 했다. `Flux 패턴`은 `MVC 패턴`에 있던 `상태의 전이`(뷰와 모델 사이의 데이터 변경이 연결된 수많은 곳으로 따라 변경되는 현상) 현상을 없애주고 `예측 가능`하다는 특징이있다.
 
-![Flux](./images/flux.png)
+<Image src="/images/flux.png" alt="Flux" width={500} height={500} />
 
 &nbsp; 뷰 라이브러리의 발전과 함께 상태가 복잡한 웹 어플리케이션들이 생겨났고 고도화된 전역 상태 관리에 대한 필요성이 생기고 있었다. 2015년에는 Dan Abramov에 의해서 `React` + `Flux`의 구조에 `Reducer`를 결합한 `Redux`가 등장했다. `Redux`는 리액트, 앵귤러, 바닐라 js든 다 이용이 가능한 라이브러리이고 리액트와는 `react-redux`를 이용해서 바인딩 된다. `Redux`는 리액트의 `Prop Drilling` 문제와 여러 복잡해지는 상태 공유에 따른 컴포넌트간 의존성 문제를 해결할 대안으로 떠올랐고 금세 상태 관리 라이브러리의 대세가 되었다.
 
 &nbsp; 그후 리액트 `Hooks`가 나왔고 `Context API`를 이용해서 `Prop Drilling` 문제 해결, 역할에 따른 `상태 분리` 등이 가능해졌다. `React Query`, `SWR` 등이 나와서 기존에 `Redux`에 캐싱되어있던 서버 상태를 분리해서 캐싱 하고 있고 최근 리액트 팀은 리액트 전용 전역 라이브러리인 `Recoil`을 개발중에 있다.
 
-![Context](./images/context.png)
+<Image src="/images/context.png" alt="Context" width={500} height={500} />
 
 ## 좋은 리액트 상태 관리란 뭘까
 
@@ -74,7 +86,12 @@ description: 리액트 상태 관리의 역사와 문제점을 분석하고, Red
 
 ### 전역 상태 관리한다면 꼭 Redux 여야 할까
 
-![reduxpopular](./images/reduxpopular.png)
+<Image
+  src="/images/reduxpopular.png"
+  alt="reduxpopular"
+  width={500}
+  height={500}
+/>
 
 - 한번 자리 잡은 Redux의 인기는 여전하다
 
@@ -86,7 +103,7 @@ description: 리액트 상태 관리의 역사와 문제점을 분석하고, Red
 
 하지만 `Context`도 문제가 있다. `Redux`는 의존해서 사용하는 값이 변할때 리렌더링이 되도록 최적화 되어있지만 `Context`의 경우 해당 값 말고 다른 값이 변경될때도 컴포넌트는 재호출 되어서 리렌더링이 발생한다. `Context`를 다룰때에는 꼭 관심사에 따라 모두 다 분리해서 관리 해야한다. 하지만 어플리케이션이 비대화 될수록 관심사가 많아지면 관리하기 어려울정도로 래핑이 많아지는 문제가 있다. 중첩되는 컴포넌트들이 많아지니 성능 이슈도 생긴다.
 
-![recoil](./images/recoil.png)
+<Image src="/images/recoil.png" alt="recoil" width={500} height={500} />
 
 - 출처 : 리코일 왕위를 계승하는 중입니다 - 김태곤
 
@@ -96,7 +113,7 @@ description: 리액트 상태 관리의 역사와 문제점을 분석하고, Red
 
 &nbsp; `Recoil`은 `Redux` `MobX`등의 서드파티 라이브러리와 다르게 오직 리액트 만을 위해서 생겨난 라이브러리이다. 서드 파티 라이브러리들은 외부에서 상태를 관리한뒤 `react-redux`등을 통해서 리액트 라이프 사이클에 접근했지만 `Recoil`은 깊은 부분까지 리액트 상태를 직접 다룬다. 페이스북이 직접 개발하기 때문에 장기적으로 [동시성 모드](https://ko.reactjs.org/docs/concurrent-mode-intro.html)나 [Suspense](https://ko.reactjs.org/docs/concurrent-mode-suspense.html) 같은 리액트의 실험적 기능 까지 확대할 목적으로 개발 되고 있다. 서드파티 라이브러리를 쓰게되면 리액트의 내부 스케줄러에는 접근할수 없어서 내부 성능 로직 개선이 어렵게 된다.
 
-![atomrecoil](./images/atomrecoil.png)
+<Image src="/images/atomrecoil.png" alt="atomrecoil" width={500} height={500} />
 
 `Recoil`을 쓰게되면 `Atom`이라는 작은 데이터 조각을 만들어서 해당 `State` 변화 시에 이를 참조하는 컴포넌트들만 리렌더를 시키는 단순한 로직으로 되어있다. 아직은 디버깅 Tool들이 미미하고 안정화가 덜되어 있지만 조만간 안정화 되면서 빠른 속도로 `Redux`를 대체할 것으로 보인다.
 

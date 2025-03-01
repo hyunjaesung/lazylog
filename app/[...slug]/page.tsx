@@ -3,6 +3,7 @@ import { allPosts } from "contentlayer/generated";
 
 import { Metadata } from "next";
 import { Mdx } from "@/components/mdx-components";
+import { parseISO, format } from "date-fns";
 
 interface PostProps {
   params: {
@@ -52,11 +53,9 @@ export default async function PostPage({ params }: PostProps) {
   return (
     <article className="py-6 prose dark:prose-invert">
       <h1 className="mb-2">{post.title}</h1>
-      {post.description && (
-        <p className="text-xl mt-0 text-slate-700 dark:text-slate-200">
-          {post.description}
-        </p>
-      )}
+      <div className="text-sm text-gray-500">
+        {format(parseISO(post.date), "MMM dd, yyyy")}
+      </div>
       <hr className="my-4" />
       <Mdx code={post.body.code} />
     </article>

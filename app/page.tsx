@@ -1,10 +1,9 @@
 import { allPosts } from "@/.contentlayer/generated";
 import Link from "next/link";
 import Image from "next/image";
-import { format, isAfter, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 export default function Home() {
-  console.log(allPosts);
   return (
     <div className="grid grid-cols-1 gap-16 lg:gap-28 md:grid-cols-2 md:my-16 my-8">
       {allPosts
