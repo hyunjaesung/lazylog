@@ -1,3 +1,11 @@
+import { allPosts } from "@/.contentlayer/generated";
+import PostList from "@/components/PostList";
+
 export default function EssayPage() {
-  return <div>EssayPage</div>;
+  return (
+    <PostList
+      title="Essay"
+      allPosts={allPosts.filter((post) => post.category === "Essay")}
+    />
+  );
 }
