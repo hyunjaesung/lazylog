@@ -49,7 +49,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   <nav className="l-auto text-sm font-medium space-x-6">
                     <Link href="/tech">Tech</Link>
                     <Link href="/essay">Essay</Link>
-                    <Link href="/about">About</Link>
+                    <Link href="https://www.linkedin.com/in/hyunjae-sung-724927206">
+                      About
+                    </Link>
                   </nav>
                   <ModeToggle />
                 </div>
