@@ -24,7 +24,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="max-w-2xl mx-auto py-10 px-4">
-            <header>
+            <header className="mb-10">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">
                   <Link href="/">stevy.dev</Link>
@@ -40,6 +40,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
               </div>
             </header>
             <main>{children}</main>
+            <footer className="mt-10 text-center">
+              <p className="text-sm text-slate-500">
+                stevy.dev &copy; {new Date().getFullYear()}
+              </p>
+            </footer>
           </div>
           <Analytics />
         </ThemeProvider>
