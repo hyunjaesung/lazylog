@@ -2,6 +2,8 @@
 title: React Hook의 의존성 배열에 대해
 date: 2024-03-10
 category: Tech
+image: /images/react-deps.webp
+description: useEffect의 의존성 배열에는 useRef의 current 값을 넣지 말아야 한다.
 ---
 
 최근 동료 분이 useEffect의 의존성 배열에는 useRef의 값이 들어가면 안된다고 코드 리뷰를 해주셨다. 하지만 분명 useRef의 current값이 들어갈 때와 안 들어갈 때가 차이가 있었다. 그 차이를 인식하고 해당 방법으로 구현을 했기에 혼란스러웠다. 아래 예제를 보자
