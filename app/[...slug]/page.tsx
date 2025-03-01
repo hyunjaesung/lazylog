@@ -35,11 +35,17 @@ export async function generateMetadata({
     title: post.title,
     description: post.description,
     openGraph: {
+      title: post.title,
+      description: post.description,
       images: [
         {
           url: post.image || "",
+          width: 1200,
+          height: 630,
         },
       ],
+      url: `https://stevy.dev/${post.slugAsParams}`,
+      siteName: "stevy.dev",
     },
   };
 }

@@ -15,10 +15,14 @@ const firaCode = Fira_Code({
 export const metadata: Metadata = {
   title: "stevy.dev",
   description: "프론트엔드 개발을 하고 있는 스티비의 블로그입니다",
+  metadataBase: new URL("https://stevy.dev"),
   openGraph: {
     images: [
       {
         url: "/images/profile.jpeg",
+        width: 1200,
+        height: 630,
+        alt: "stevy.dev",
       },
     ],
   },
