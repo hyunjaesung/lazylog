@@ -7,15 +7,13 @@ type Props = {
   title?: string;
 };
 
-export default function PostList({ allPosts, title = "" }: Props) {
+export default function PostList({ allPosts = [], title = "" }: Props) {
   return (
     <div>
       {title && <h1 className="text-2xl font-bold">{`#${title}`}</h1>}
       <div className="grid grid-cols-1 gap-16 lg:gap-28 md:grid-cols-2 md:my-16 my-8">
         {allPosts
-          .toSorted(
-            (a, b) => Number(parseISO(b.date)) - Number(parseISO(a.date))
-          )
+          .sort((a, b) => Number(parseISO(b.date)) - Number(parseISO(a.date)))
           .map((post) => (
             <article key={post._id}>
               <Link href={post.slugAsParams}>
