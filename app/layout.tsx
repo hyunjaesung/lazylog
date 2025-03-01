@@ -1,11 +1,15 @@
 import Link from "next/link";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Inter, Fira_Code } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@/components/analytics";
 import { ModeToggle } from "@/components/mode-toggle";
 
 const inter = Inter({ subsets: ["latin"] });
+const firaCode = Fira_Code({
+  subsets: ["latin"],
+  variable: "--font-fira-code",
+});
 
 export const metadata = {
   title: "Create Next App",
@@ -20,7 +24,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ko">
       <body
-        className={`antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 ${inter.className}`}
+        className={`antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 ${inter.className} ${firaCode.variable}`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex flex-col items-center max-w-4xl mx-auto py-10 px-4">
@@ -39,7 +43,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 </div>
               </div>
             </header>
-            <main>{children}</main>
+            <main className="w-full flex flex-col items-center">
+              {children}
+            </main>
             <footer className="mt-10 text-center">
               <p className="text-sm text-slate-500">
                 stevy.dev &copy; {new Date().getFullYear()}

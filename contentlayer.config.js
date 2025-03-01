@@ -1,4 +1,5 @@
 import { defineDocumentType, makeSource } from "contentlayer/source-files";
+import rehypePrettyCode from "rehype-pretty-code";
 
 /** @type {import('contentlayer/source-files').ComputedFields} */
 const computedFields = {
@@ -40,26 +41,45 @@ export const Post = defineDocumentType(() => ({
     description: {
       type: "string",
     },
-    category: {
-      type: "string",
+    date: {
+      type: "date",
       required: true,
-    },
-    image: {
-      type: "string",
     },
     tags: {
       type: "list",
       of: { type: "string" },
+      default: [],
     },
-    date: {
-      type: "date",
+    image: {
+      type: "string",
+    },
+    category: {
+      type: "string",
       required: true,
     },
   },
   computedFields,
 }));
 
+const rehypePrettyCodeOptions = {
+  theme: "github-dark",
+  onVisitLine(node) {
+    if (node.children.length === 0) {
+      node.children = [{ type: "text", value: " " }];
+    }
+  },
+  onVisitHighlightedLine(node) {
+    node.properties.className.push("highlighted");
+  },
+  onVisitHighlightedWord(node) {
+    node.properties.className = ["highlighted"];
+  },
+};
+
 export default makeSource({
   contentDirPath: "./content",
   documentTypes: [Post, Page],
+  mdx: {
+    rehypePlugins: [[rehypePrettyCode, rehypePrettyCodeOptions]],
+  },
 });

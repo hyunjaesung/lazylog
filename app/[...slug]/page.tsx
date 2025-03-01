@@ -51,7 +51,7 @@ export default async function PostPage({ params }: PostProps) {
   }
 
   return (
-    <article className="py-6 prose dark:prose-invert">
+    <article className="py-6 prose dark:prose-invert w-full">
       <h1 className="mb-2">{post.title}</h1>
       <div className="text-sm text-gray-500">
         {format(parseISO(post.date), "MMM dd, yyyy")}
