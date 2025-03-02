@@ -34,7 +34,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="ko">
+    <html lang="ko" style={{ scrollbarGutter: "stable" }}>
       <body
         className={`antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 ${inter.className} ${firaCode.variable}`}
       >
