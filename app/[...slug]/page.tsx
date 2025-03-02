@@ -32,7 +32,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: post.title,
+    title: `${post.title} - stevy.dev`,
     description: post.description,
     openGraph: {
       title: post.title,
