@@ -40,12 +40,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex flex-col items-center max-w-4xl mx-auto py-10 px-4">
-            <header className="mb-10 w-full">
-              <div className="flex items-center justify-between">
+            <header className="md:mb-10 w-full">
+              <div className="md:flex items-center justify-between">
                 <h1 className="text-2xl font-bold">
                   <Link href="/">stevy.dev</Link>
                 </h1>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mt-4 md:mt-0">
                   <nav className="l-auto text-sm font-medium space-x-6">
                     <Link href="/tech">Tech</Link>
                     <Link href="/essay">Essay</Link>
