@@ -39,7 +39,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         className={`antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 ${inter.className} ${firaCode.variable}`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="flex flex-col items-center max-w-4xl mx-auto py-10 px-4">
+          <div className=" h-screen flex flex-col items-center max-w-4xl mx-auto py-10 px-4">
             <header className="md:mb-10 w-full">
               <div className="md:flex items-center justify-between">
                 <h1 className="text-2xl font-bold">
@@ -49,18 +49,16 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   <nav className="l-auto text-sm font-medium space-x-6">
                     <Link href="/tech">Tech</Link>
                     <Link href="/essay">Essay</Link>
-                    <Link href="https://www.linkedin.com/in/hyunjae-sung-724927206">
-                      About
-                    </Link>
+                    <Link href="/about">About</Link>
                   </nav>
                   <ModeToggle />
                 </div>
               </div>
             </header>
-            <main className="w-full flex flex-col items-center">
+            <main className="w-full flex flex-col items-center mb-10">
               {children}
             </main>
-            <footer className="mt-10 text-center">
+            <footer className="text-center pb-10">
               <p className="text-sm text-slate-500">
                 stevy.dev &copy; {new Date().getFullYear()}
               </p>
