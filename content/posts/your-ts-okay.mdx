@@ -194,10 +194,12 @@ type Type3 = () => void;
 const type1Func1: Type1 = ((a: string) => console.log(a)) as Type2; // 타입 통과
 const type1Func2: Type1 = (() => {}) as Type3; // 타입 통과
 
-const type2Func1: Type2 = ((a: string, b: number) => console.log(a, b)) as Type1; // 타입 에러
+const type2Func1: Type2 = ((a: string, b: number) =>
+  console.log(a, b)) as Type1; // 타입 에러
 const type2Func2: Type2 = (() => {}) as Type3; // 타입 통과
 
-const type3Func1: Type3 = ((a: string, b: number) => console.log(a, b)) as Type1; // 타입 에러
+const type3Func1: Type3 = ((a: string, b: number) =>
+  console.log(a, b)) as Type1; // 타입 에러
 const type3Func2: Type3 = ((a: string) => console.log(a)) as Type2; // 타입 에러
 ```
 
@@ -212,8 +214,6 @@ const type3Func2: Type3 = ((a: string) => console.log(a)) as Type2; // 타입 �
 TypeScript의 설계적 결함은 유연함을 위해 허용한 이변성에서 오고 이를 제대로 이해하지 못하고 쓴다면 타입 검사를 통과했는데도 런타임 에러를 만날 수 있다. 나는 세가지의 경우의 이변성을 확인했다.
 
 **첫번째**, 함수의 매개변수 타입에서의 이변성이다.
-
-> 공식 깃헙 문서에서 이변적으로 만든 [이유](https://github.com/microsoft/typescript/wiki/faq#why-are-function-parameters-bivariant)를 확인해 볼 수 있다. 생산성 때문이라고 한다.)
 
 `strictFunctionTypes`옵션을 `true`로 두면 반공변적으로 동작하기에 그것으로 회피해 볼 수 있으니 자세히는 다루지는 않겠다.
 
