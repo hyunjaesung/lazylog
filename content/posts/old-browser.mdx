@@ -187,12 +187,12 @@ console.log(s == null ? void 0 : s.test);
 번들링 하면서 함께 변환 된다
 
 ```jsx
-// chrome64을 타겟으로 react.production.js 에서 실험
+// chrome64을 타겟으로 react.production.js 을 빌드
 
 // 변환 전
 function getIteratorFn(maybeIterable) {
   const test = {test:'stevytest'};
-  console.log(test?.test);
+  console.log(test?.test); // 옵셔널을 추가 해봄
   if (null === maybeIterable || "object" !== typeof maybeIterable) return null;
   maybeIterable =
     (MAYBE_ITERATOR_SYMBOL && maybeIterable[MAYBE_ITERATOR_SYMBOL]) ||
@@ -201,7 +201,7 @@ function getIteratorFn(maybeIterable) {
 }
 
 // 변환 후
-function fl(s){const T={test:"stevytest"};return console.log(T==null?void 0:T.test)
+function fl(s){const T={test:"stevytest"};return console.log(T==null?void 0:T.test) // 옵셔널도 변환이 되었다
 ```
 
 ### vite.plugin-legacy를 쓸 때 생길 수 있는 문제
