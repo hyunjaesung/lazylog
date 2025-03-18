@@ -1,0 +1,248 @@
+---
+title: 자바스크립트 구 버전 브라우저 대응 트러플 슈팅
+date: 2025-03-18
+category: Tech
+image: /images/old-browser.jpg
+description: Vite를 사용한 트랜스파일, 폴리필 등 이모저모
+---
+
+<Image
+  src="/images/old-browser.jpg"
+  alt="구 버전 브라우저 대응 트러플 슈팅"
+  width={500}
+  height={500}
+/>
+
+## 구 버전 브라우저에 대응에 대한 필요성
+
+현재 개발 중인 프로젝트가 2년 만에 실 배포를 앞두고 있다. 그런데 최근 보안팀으로부터 보안 검수 과정에서 사용하는 브라우저 환경에서 코드가 제대로 동작하지 않는다는 연락을 받았다. 확인 결과, 코드 중에서 사용한 `Array.prototype.toSorted()` 메서드가 지원되지 않아 에러가 발생했다. 최근에는 Internet Explorer나 ES6 이상의 자바스크립트를 해석하지 못하는 브라우정 환경이 거의 없어서 크게 신경 쓰지 않았던 부분인데, 이번 보안 검수를 계기로 구형 브라우저 지원에 대해 다시 점검하게 되었다.
+
+문제를 확인해 보니, 번들러로 사용하고 있는 Vite의 `build.target`이 명확하게 지정되지 않아 최신 문법이 그대로 배포된 점이 원인으로 보였다. 게다가 모노레포(monorepo) 환경에서 각 패키지의 TypeScript 설정(`tsconfig`)도 `esnext`를 타겟으로 하고 있어, 더 최신 문법이 유지된 채로 배포되는 상황이었다. 이번 기회에 Vite의 `build.target` 설정과 폴리필(polyfill) 추가 등, 구 버전 브라우저 지원을 위한 여러 가지 방법을 고민하고 찾아본 내용을 정리해 보았다.
+
+## 지원 범위 전략
+
+지원 브라우저의 범위를 어떻게 잡을지 고민했다. 처음엔 낮은 버전까지 폭넓게 지원하는 방향을 생각했지만, 성능이나 관리 측면에서 비효율적이라는 생각이 들었다. 다행히 기획팀과 논의한 결과, 앱의 공식적인 OS 지원 범위가 명확하게 정해져 있었고, 이에 따라 지원 범위를 설정하는 것이 가장 적절하다고 판단했다. 앱은 현재 Android 10과 iOS 16 이상을 지원하고 있었으며, QA팀도 이에 맞춰 테스트를 진행하고 있다고 했다.
+
+Android 10은 대략 2019년 출시된 OS이고, iOS 16은 2022년에 출시된 비교적 최신 OS였다. 이를 바탕으로 Vite의 `build.target`을 정할 때, 처음에는 두 OS 중 더 낮은 버전인 Android 10(2019년)에 맞추어 ES2019를 설정하려 했다. 하지만 프로젝트 내에서 사용 중인 `BigInt` 문법이 ES2020 이상에서만 트랜스파일링이 가능하다는 점을 발견했다. 한편으로 ES2020으로 설정하게 되면, 명확하게 정의된 프로덕트의 지원 범위(Android 10, iOS 16)보다 모호한 기준이 될 수 있다고 생각했다. 특히 QA 과정에서도 지원 범위를 명시적으로 표현하는 편이 더 효율적이고 명확할 것이라 판단했다.
+
+그래서 보다 정확한 지원 범위를 고민하다가, 실제 글로벌 사용자 데이터를 참고했다. 조사 결과 전 세계 브라우저 점유율 기준 Chrome 79 이상, Safari 9.8 이상의 사용자가 전체의 99.98% 이상을 차지하고 있었다. Android 10의 출시년도(2019년)를 고려했을 때 Chrome 79와 Safari 9.8 이상의 범위라면 앱의 공식적인 OS 지원범위와 글로벌 사용자 환경 모두 충분히 커버할 수 있다고 판단하여 최종적으로 지원 범위를 Chrome 79 이상, Safari 9.8 이상으로 설정하기로 결정했다.
+
+<Image
+  src="/images/can-i-use.png"
+  alt="구 버전 브라우저 대응 트러플 슈팅"
+  width={500}
+  height={500}
+/>
+
+## 트랜스파일과 폴리필
+
+vite의 `build.target` 설정을 에뮬레이터 버전에 맞춰 변환하고, 이제는 문제가 해결됐다고 생각하여 다시 결과물을 확인해봤다. 그런데 아무리 빌드를 해봐도 `Array.toSorted()`는 변환되지 않고 남아있었다. (참고로 Vite는 내부에서 Babel로 자바스크립트를 구버전으로 변환하지 않고, ESBuild와 Rollup을 통해 코드를 처리해준다.)
+
+이 상황에서 무엇이 문제였을까? 처음에는 Vite의 `build.target` 옵션이 최신 자바스크립트를 구형 브라우저에서 실행되도록 완벽하게 변환해주는 기능이라고 생각했는데, 알고 보니 내가 이해했던 역할과 실제 Vite의 `build.target` 설정의 목적에는 미묘한 차이가 있었다.
+
+결론부터 말하자면, `Array.toSorted()`와 같은 기능을 지원하지 않는 구형 브라우저에서 사용하려면 폴리필(polyfill)이 필요했다. 기존에 내가 생각했던 폴리필의 개념은 "트랜스파일이 미처 다루지 못하는 예외적인 상황에서 추가로 필요한 기능을 보충하는 보조적인 수단"이었다. 하지만 실제로 트랜스파일과 폴리필은 서로 목적 자체가 조금 다르다. 정확히 말하면, 서로를 보완하는 독립적인 도구들이다.
+
+구형 브라우저에서 최신 자바스크립트를 실행하려면 두 가지 측면을 모두 대응해줘야 한다.
+
+1. **문법적인 측면(Syntax)**: 최신 문법이 구버전 브라우저에서도 실행 가능하게 변환
+
+   ```jsx
+   // 변환 전
+   const fetchData = async () => {
+     const response = await fetch("/api/data");
+     return response.json();
+   };
+
+   // 변환 후 (구형 브라우저용)
+   var fetchData = function fetchData() {
+     return fetch("/api/data").then(function (response) {
+       return response.json();
+     });
+     // 참고로 기능을 제공하는 fetch의 지원 같은 경우는 폴리필의 영역이다
+     // 브라우저에서는 2015년 부터 지원을 하기 시작했다
+   };
+   ```
+
+   - 예시
+     - `async/await`
+     - 화살표 함수(Arrow Functions) `() ⇒ {}`
+     - 옵셔널 체이닝(Optional Chaining, `?.`)
+
+2. **기능적인 측면(API)**: 구형 브라우저에서 존재하지 않는 최신 기능을 제공
+
+   ```jsx
+   // 구형 브라우저는 Array.toSorted가 없음 (폴리필 필요)
+   const arr = [3, 1, 2];
+   const sorted = arr.toSorted(); // 최신 브라우저는 문제없음
+
+   // 구형 브라우저 폴리필 (예시)
+   if (!Array.prototype.toSorted) {
+     Array.prototype.toSorted = function (compareFn) {
+       return Array.from(this).sort(compareFn);
+     };
+   }
+   ```
+
+   - 예시
+     - `Promise`
+     - `IntersectionObserver`
+     - `Array.prototype.toSorted()`
+
+즉, ES 버전이 올라갈 때는 단순히 문법적인 변화뿐만 아니라 새로운 기능(API)의 추가도 함께 이뤄지며, 구형 브라우저 지원을 위해서는 이 두 가지를 모두 고려해야 한다.
+
+트랜스파일은 문법적인 변환을, 폴리필은 기능적인 지원을 담당한다고 보면 정확하다. 문법 안에 기능이 포함되어 있는 경우, 변환 후 그 기능을 지원할 수 있는 폴리필도 필요하다면 함께 제공되어야 한다.
+
+참고로 자바스크립트의 문법적인 추가는 자바스크립트 진형(ECMAScript)에서만 하고 있고 기능적인 추가는 자바스크립트 진형(ECMAScript), 브라우저 진형(W3C, WHATWG) 모두에서 하고 있다.
+
+- 자바스크립트 진형에서 추가된 기능들
+  - `Promise`
+  - `Array.prototype.includes()`
+  - `Array.prototype.toSorted()`
+  - `Object.assign()`
+- 브라우저 진형에서 추가한 기능들
+  - `fetch`
+  - `IntersectionObserver`
+  - `ResizeObserver`
+  - `requestAnimationFrame`
+
+브라우저 진형에서 추가한 기능들은 브라우저에서만 사용이 가능하고 Node.js에서는 지원이 안될 가능성이 높은 기능들이다.
+
+## vite + 구버전 대응을 하며 만난 트러블 슈팅
+
+### 개발 환경과 프로덕트 환경의 빌드는 다를 수 있다
+
+Vite는 개발 환경(`vite dev`)에서는 ESBuild를 사용하고, 프로덕션 환경(`vite build`)에서는 ESBuild 와 Rollup 모두를 사용해 번들링한다. 두 환경에서 각각 `esbuild.target`과 `build.target`이 설정되는데, 이 설정이 서로 다르거나 명확히 지정되지 않은 경우 문제가 발생할 수 있다. 로컬 개발 환경에서는 정상적으로 동작하던 코드가 실제 프로덕션 환경이나 구 버전 브라우저에서는 예상치 못한 에러가 날 수 있다.
+
+이러한 문제를 방지하기 위해서는 개발 환경(`esbuild.target`)과 프로덕션 환경(`build.target`)의 타겟 버전을 동일하게 설정하면 된다. 다만, 개발 환경에서 기본값(`esnext`) 대신 낮은 버전(`es2015` 등)을 설정할 경우, ESBuild가 문법 변환 작업을 수행해야 하므로 개발 서버의 속도가 약간 느려질 수 있다.
+
+```jsx
+// export default defineConfig({
+//   build: {
+//     target: ["chrome64", "es2020"],
+//   },
+//   esbuild: {
+//     target: ["chrome64", "es2020"],
+//   },
+//   plugins: [react()],
+// });
+
+const test = {
+  test: "test"
+};
+console.log(test == null ? void 0 : test.test);
+function App() {
+  _s();
+  const [count, setCount] = useState(0);
+ ...
+}
+```
+
+```jsx
+// export default defineConfig({
+//   build: {
+//     target: ["chrome64", "es2020"],
+//   },
+//   plugins: [react()],
+// });
+
+const test = {
+  test: "test"
+};
+console.log(test?.test);
+function App() {
+  _s();
+  const [count, setCount] = useState(0);
+  ...
+}
+```
+
+참고로 Vite가 두가지 번들러를 사용하는 이유는 개발 환경에서는 매우 빠른 트랜스파일 속도 프로덕션 환경에서는 트리 셰이킹과 최상의 번들 최적화를 달성이라는 두 마리 토끼를 모두 잡기 위해서 이다. 하지만 두 가지 번들러를 동시에 활용해 각 환경의 장점을 극대화할 수 있지만, 이로 인해 개발 환경과 프로덕션 환경 사이에 동작이 달라질 가능성이 존재한다는 단점도 있다. 이러한 문제를 근본적으로 해결하기 위해, Vite 개발팀에서는 ESBuild와 Rollup의 장점을 하나로 통합한 차세대 번들러 [Rolldown](https://rolldown.rs/about)을 개발 중이라고 한다.
+
+### 두가지 브라우저 지원이 명시되어 있다면 어떻게 되는 걸까
+
+Chrome 79, Safari 14를 지원 범위로 잡았지만 Vite의 build.target은 보수적인 접근으로 둘 중 구버전을 기준으로 트랜스파일을 하게된다.
+
+아래의 예시는 Chrome 64, Safari 15를 타겟으로 했을때 예시이다. Chrome 64는 ES8(2017) 까지 지원하고 Safari 15는 ES2021까지 지원하기 때문에 옵셔널 문법을 허용한다. 실제로 빌드해보면 아래와 같이 둘 중 더 낮은 버전의 자바스크립트 문법으로 변환된다.
+
+```jsx
+// 원본 코드
+const test = {
+  test: "test",
+};
+console.log(test?.test);
+
+// build.target: ["safari15"]
+const n = { test: "test" };
+console.log(n?.test);
+
+// build.target: ["chrome64", "safari15"]
+const s = { test: "test" };
+console.log(s == null ? void 0 : s.test);
+```
+
+참고로 Vite에서 target된 자바스크립트 버전으로의 트랜스파일은 개발 환경, 프로덕션 환경 모두 ESbuild가 수행하고 있다. 아마 Rollup에서는 특정 자바스크립트 버전으로 번들링을 위해서는 Webpack처럼 따로 Babel 플러그인이 필요하고 트랜스파일 속도가 빠르지 않기 때문 인 것 같다.
+
+### 설치한 npm package들도 같이 변환시킬까
+
+번들링 하면서 함께 변환 된다
+
+```jsx
+// chrome64을 타겟으로 react.production.js 에서 실험
+
+// 변환 전
+function getIteratorFn(maybeIterable) {
+  const test = {test:'stevytest'};
+  console.log(test?.test);
+  if (null === maybeIterable || "object" !== typeof maybeIterable) return null;
+  maybeIterable =
+    (MAYBE_ITERATOR_SYMBOL && maybeIterable[MAYBE_ITERATOR_SYMBOL]) ||
+    maybeIterable["@@iterator"];
+  return "function" === typeof maybeIterable ? maybeIterable : null;
+}
+
+// 변환 후
+function fl(s){const T={test:"stevytest"};return console.log(T==null?void 0:T.test)
+```
+
+### vite.plugin-legacy를 쓸 때 생길 수 있는 문제
+
+> Note that this is only concerned with syntax features, not APIs. It does *not* automatically add [polyfills](https://developer.mozilla.org/en-US/docs/Glossary/Polyfill) for new APIs that are not used by these environments. You will have to explicitly import polyfills for the APIs you need (e.g. by importing [`core-js`](https://www.npmjs.com/package/core-js)). Automatic polyfill injection is outside of esbuild's scope. - [ESBuild Doc](https://esbuild.github.io/api/#target)
+
+ESBuild는 폴리필을 직접 추가하도록 권장하지만, vite의 `plugin-legacy`를 사용하면 폴리필 추가 작업을 자동으로 할 수 있도록 도와준다. `plugin-legacy`는 구버전 브라우저 지원에 유용한 도구지만, 때로는 예측하지 못한 문제를 발생시키기도 한다. 예를 들어, vite.config에 legacy 플러그인을 다음과 같이 설정했다고 하자.
+
+```jsx
+plugins: [
+  ...
+  legacy({
+    targets: [`chrome >= ${supportVersion.chrome}`, `safari >= ${supportVersion.safari}`],
+    modernPolyfills: true // 가능한 polyfills들을 모두 넣어주는 옵션
+  }),
+  ...
+```
+
+이 상태에서 빌드하면 다음과 같은 에러를 만날 수 있다.
+
+```jsx
+ Big integer literals are not available in the configured target environment ("chrome64", "edge79", "es2020", "firefox67", "safari12" + 2 overrides)
+```
+
+이 문제는 `BigInt`가 ES2020 이상에서만 지원되는 기능이지만, legacy가 그 이전 버전까지 빌드하려고 시도하기 때문에 발생한다. Vite는 legacy와 modern의 기준을 Native ESM 지원 여부로 나누며 보통 Chrome 64 이상을 modern으로 간주한다. 이를 해결하기 위해 다음과 같이 설정할 수 있다.
+
+```jsx
+plugins: [
+  ...
+  legacy({
+    targets: [`chrome >= ${supportVersion.chrome}`, `safari >= ${supportVersion.safari}`],
+    modernPolyfills: true // 가능한 polyfills들을 모두 넣어주는 옵션
+    renderLegacyChunks: false, // 구 버전으로는 빌드를 하지 않는다
+  }),
+  ...
+```
+
+이렇게 설정하면 Chrome 64 미만의 legacy 환경을 위한 빌드를 수행하지 않기 때문에 `BigInt`가 있어도 빌드가 가능해진다. 하지만 실제로 확인한 결과, `renderLegacyChunks`를 false로 설정하면 `targets` 옵션이 무시된다는 사실을 알 수 있었다. 내부 코드를 확인해보니 `modernTargets` 옵션을 설정하면 해결될 것으로 보였지만, 실제로는 여전히 `build.target` 옵션을 기준으로만 빌드가 수행되었다. 즉, `renderLegacyChunks`가 true일 때만 `targets`와 `modernTargets`가 제대로 동작하는 구조였다. 다만, 이 경우에도 `modernTargets`는 트랜스파일링 시에는 사용되지 않고 오직 폴리필 설정에는 적용된다. 이는 [plugin-legacy의 내부 구현](https://github.com/vitejs/vite/blob/main/packages/plugin-legacy/src/index.ts#L954)과 빌드 결과물을 살펴본 후에야 정확히 파악할 수 있었던 부분이며, 공식 문서만으로는 이해하기 어려운 지점이다.
+
+정리하면, `plugin-legacy`는 ESM을 지원하지 않는 브라우저를 지원하거나 폴리필을 자동으로 추가할 때 사용된다. 하지만 옵션 설정에 따라 예측하기 어려운 동작이 발생할 수 있으므로, 세부 설정 시 공식 문서와 내부 구현을 정확히 확인할 필요가 있다.
+
+## 마치며
+
+구형 브라우저 대응을 진행하며 트랜스파일과 폴리필의 역할을 명확하게 이해할 수 있었다. 또한 내부 구현체와 빌드 결과물을 직접 확인하는 과정에서 여러 인사이트를 얻었다. GPT에게 의존해서 얻은 정보와 실제로 확인한 결과가 다를 때도 있었는데, 결국 직접 손으로 작성하고 검증하는 것이 시간이 더 걸리더라도 잘못된 지식이나 이해를 방지하는 가장 확실한 방법이라는 생각이 들었다.
