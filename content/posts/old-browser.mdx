@@ -92,20 +92,20 @@ vite의 `build.target` 설정을 에뮬레이터 버전에 맞춰 변환하고, 
 
 트랜스파일은 문법적인 변환을, 폴리필은 기능적인 지원을 담당한다고 보면 정확하다. 문법 안에 기능이 포함되어 있는 경우, 변환 후 그 기능을 지원할 수 있는 폴리필도 필요하다면 함께 제공되어야 한다.
 
-참고로 자바스크립트의 문법적인 추가는 자바스크립트 진형(ECMAScript)에서만 하고 있고 기능적인 추가는 자바스크립트 진형(ECMAScript), 브라우저 진형(W3C, WHATWG) 모두에서 하고 있다.
+참고로 자바스크립트의 문법적인 추가는 자바스크립트 진영(ECMAScript)에서만 하고 있고 기능적인 추가는 자바스크립트 진영(ECMAScript), 브라우저 진영(W3C, WHATWG) 모두에서 하고 있다.
 
 - 자바스크립트 진형에서 추가된 기능들
   - `Promise`
   - `Array.prototype.includes()`
   - `Array.prototype.toSorted()`
   - `Object.assign()`
-- 브라우저 진형에서 추가한 기능들
+- 브라우저 진영에서 추가한 기능들
   - `fetch`
   - `IntersectionObserver`
   - `ResizeObserver`
   - `requestAnimationFrame`
 
-브라우저 진형에서 추가한 기능들은 브라우저에서만 사용이 가능하고 Node.js에서는 지원이 안될 가능성이 높은 기능들이다.
+브라우저 진영에서 추가한 기능들은 브라우저에서만 사용이 가능하고 Node.js에서는 지원이 안될 가능성이 높은 기능들이다.
 
 ## Vite로 구버전 대응을 하며 만난 트러블 슈팅
 
