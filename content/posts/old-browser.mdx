@@ -239,9 +239,9 @@ plugins: [
   ...
 ```
 
-이렇게 설정하면 Chrome 64 미만의 legacy 환경을 위한 빌드를 수행하지 않기 때문에 `BigInt`가 있어도 빌드가 가능해진다. 하지만 실제로 확인한 결과, `renderLegacyChunks`를 false로 설정하면 `targets` 옵션이 무시된다는 사실을 알 수 있었다. 내부 코드를 확인해보니 `modernTargets` 옵션을 설정하면 해결될 것으로 보였지만, 실제로는 여전히 `build.target` 옵션을 기준으로만 빌드가 수행되었다. 즉, `renderLegacyChunks`가 true일 때만 `targets`와 `modernTargets`가 제대로 동작하는 구조였다. 다만, 이 경우에도 `modernTargets`는 트랜스파일링 시에는 사용되지 않고 오직 폴리필 설정에는 적용된다. 이는 [plugin-legacy의 내부 구현](https://github.com/vitejs/vite/blob/main/packages/plugin-legacy/src/index.ts#L954)과 빌드 결과물을 살펴본 후에야 정확히 파악할 수 있었던 부분이며, 공식 문서만으로는 이해하기 어려운 지점이다.
+이렇게 설정하면 Chrome 64 미만의 legacy 환경을 위한 빌드를 수행하지 않기 때문에 `BigInt`가 있어도 빌드가 가능해진다. 하지만 실제로 확인한 결과, `renderLegacyChunks`를 false로 설정하면 `targets` 옵션이 무시된다는 사실을 알 수 있었다. 내부 코드를 확인해보니 `modernTargets` 옵션을 설정하면 해결될 것으로 보였지만, 실제로는 여전히 `build.target` 옵션을 기준으로만 빌드가 수행되었다. 즉, `renderLegacyChunks`가 true일 때만 `targets`와 `modernTargets`가 제대로 동작하는 구조였다. 다만, 이 경우에도 `modernTargets`는 트랜스파일링 시에는 사용되지 않고 오직 폴리필 설정에는 적용된다. 이는 [plugin-legacy의 내부 구현](https://github.com/vitejs/vite/blob/main/packages/plugin-legacy/src/index.ts#L954)과 빌드 결과물을 살펴본 후에야 정확히 파악할 수 있었던 부분이며, 공식 문서만으로는 이해하기 어려운 지점이다. 추가로 modernPolyfills를 true로 하면 번들 크기가 꽤 커지기도 해서 plugin-legacy에서 제공하는 개별 세팅 옵션을 쓰는 것도 추천한다.
 
-정리하면, `plugin-legacy`는 ESM을 지원하지 않는 브라우저를 지원하거나 폴리필을 자동으로 추가할 때 사용된다. 하지만 옵션 설정에 따라 예측하기 어려운 동작이 발생할 수 있으므로, 세부 설정 시 공식 문서와 내부 구현을 정확히 확인할 필요가 있다.
+정리하면, `plugin-legacy`는 ESM을 지원하지 않는 브라우저를 지원하거나 폴리필을 자동으로 추가할 때 사용된다. 하지만 옵션 설정에 따라 예측하기 어려운 동작이 발생할 수 있으므로, 세부 설정 시 공식 문서와 내부 구현, 빌드 결과물을 정확히 확인할 필요가 있다.
 
 ## 마치며
 
