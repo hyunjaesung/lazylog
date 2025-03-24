@@ -1,153 +1,479 @@
 ---
-title: 리액트 상태 관리 가이드
-date: 2021-05-23
+title: 리액트 상태 관리에 대하여
+date: 2025-03-24
 category: Tech
-image: /images/reactstate.webp
-description: 리액트 상태 관리의 역사와 문제점을 분석하고, Redux, Context API, Recoil 등의 대안을 비교하며 최적의 상태 관리 방법을 탐구한다.
+image: /images/reactstate.jpg
+description: 리액트에서 상태 관리는 단순한 기술 선택이 아니라, 애플리케이션의 방향성과 수명을 결정짓는 핵심 설계다.
 ---
 
 <Image
-  src="/images/reactstate.webp"
+  src="/images/reactstate.jpg"
   alt="리액트 상태"
   width={500}
   height={500}
 />
 
-&nbsp; 리액트 상태 관리를 어떻게 하냐에 따라 의미 없는 리렌더 등 성능 이슈가 생길 수 있고 어떤 상태 라이브러리를 쓰며 어떤 구조로 상태를 설계해서 다루냐에 따라서 유지보수 관점에서 코드의 라이프 사이클이 크게 짧아질 수도 길어 질 수도 있다. 상태 설계는 만드는 개발자마다 중요하게 생각하는 지점이 갈릴 수 도 있고 한번 설계되면 프로젝트를 새로 만들지 않는 이상 고치기가 쉽지 않아서 깊은 고려를 하고 시작해야 되는 부분이다. 전역 상태 라이브러리로 `Redux`가 여전히 대세로 쓰이고 있고 많은 프로젝트에서 전역 상태가 무분별하게 사용되고 있다. 점차 전역 상태 라이브러리를 안쓰는 게 좋다는 흐름이 생기고 있고 리액트 팀에서는 `Recoil`을 만들어서 기존의 전역 상태 라이브러리를 대체 하려고 하고 있다. 리액트의 상태 관리가 어떻게 진행되어 왔고 어떻게 진행 되려고 하고 있는지 또, 어떤 식으로 설계되는게 추천 되는지 써보려고 한다.
+리액트 상태 관리를 어떻게 하냐에 따라 의미 없는 리렌더 등 성능 이슈가 생길 수 있고 어떤 상태 라이브러리를 쓰며 어떤 구조로 상태를 설계해서 다루냐에 따라서 유지보수 관점에서 코드의 라이프 사이클이 크게 짧아질 수도 길어 질 수도 있다. 상태 설계는 만드는 개발자마다 중요하게 생각하는 지점이 갈릴 수 도 있고 한번 설계되면 프로젝트를 새로 만들지 않는 이상 다시 구조를 만들기 쉽지 않다. 최적의 상태 관리를 위해서는 여러 인사이트들이 필요하다. 이 글에서는 리액트의 상태와 상태 관리가 무엇인지 상태는 어떻게 관리되면 좋은지 써보려고 한다.
 
-## 리액트 상태란 뭘까
-
----
-
-&nbsp; 리액트 상태란 무엇일까 `Props` 는 컴포넌트간 전달 되지만 `State`는 컴포넌트 안에서 관리 되고 시간이 지나면서 바뀌는 동적인 데이터다. `State`는 해당 `State`를 기반으로 동작되는 모든 컴포넌트의 상위 컴포넌트에 존재하는 컴포넌트에 위치 되는게 추천 된다.
-
-&nbsp; 리액트 상태는 크게는 `범위`와 `역할`로 나눠 볼 수 있다. `범위`의 측면에서 본다면 `State`가 몇몇 컴포넌트에 국한되서 영향을 주는 `지역 상태`와 많은 컴포넌트에 영향을 주는 `전역 상태`로 나눌 수 있다. `지역 상태`와 `전역 상태`의 구분은 상황에 따라 상대적일 수 있다. `역할`의 측면에서 본다면 어플리케이션의 인터렉티브한 부분을 컨트롤하는 `UI 상태`, 서버로부터 데이터를 가져와 캐싱 해놓는 `서버 캐시 상태`, Form의 로딩, Submitting, disabled, validation 등등 데이터를 다루는 `Form 상태`, 브라우저에 의해서 관리되고 새로고침해도 변함 없는 `URL 상태` 등이 있다.
-
-## 리액트 상태 관리의 역사
+## **리액트 상태와 상태관리는 무엇인가**
 
 ---
 
-&nbsp; 기존의 UI 상태 관리는 `MVC (Model-View-Controller) 설계`를 써서 UI 를 관리 했었다. `양방향` 데이터 흐름을 가지고 있었기 때문에 `모델` 상태가 바뀌면 `뷰`가 바뀌며 `뷰`에서 변경이 일어난다면 다시 `모델` 상태가 바뀌며 `컨트롤러`가 이를 조작했다. `모델`하나에 의존되는 `뷰`가 많아지면 많아 질수록 `컨트롤러`의 복잡도는 더 올라갔고 최신 프론트 웹 개발 트렌드에서 UI 인터렉션이 많아지면서 `MVC 설계`는 관리가 불가능한 구조가 되었다.
+> 프로그래밍에서 ' **상태(State)** '란 어떤 시점에 시스템(또는 프로그램, 컴포넌트, 객체 등)이 가지고 있는 데이터나 그 데이터의 구성을 의미한다.
 
-<Image src="/images/MVC.png" alt="MVC" width={500} height={500} />
+HTTP를 공부한 사람이라면 " **HTTP**는 **Stateless**하다 "는 말을 들어봤을 것이다. **HTTP**는 모든 요청을 독립적으로 처리하기 때문에, 이전 요청이든 이후 요청이든 기억하지 않는다. **Stateless**하다는 것은, 각 요청이 완전히 독립적이며 요청에 따른 결과만을 반환한다는 뜻이다. 따라서 서버 입장에서는 요청 간의 관계나 사이드 이펙트를 고려할 필요가 없다. 그렇다면 **HTTP**와 달리 **Stateful**한 시스템, 즉 **상태**를 사용하는 시스템은 어떻게 동작할까?
 
-&nbsp; 2013년, `MVC` 어플리케이션이 가지는 복잡도를 해결하기 위해 `단방향` 데이터 흐름을 가지는`리액트`를 릴리즈 하게 된다. 이때는 전역 상태 라이브러리가 존재 하지 않았기 때문에 상위 컴포넌트에서 `State`를 선언하고 하위 컴포넌트로 `Props`로 내려주면서 관리 했다. 어플리케이션이 커지면서 점차 래핑되는 컴포넌트도 많았고 `State`를 전달하기위해서 중간에 있는 관계없는 중간 컴포넌트까지 지나가면서 `State`를 `Props`로 전달했다. (이런 문제를 [Prop Drilling](https://kentcdodds.com/blog/prop-drilling) 이라고 부른다)
+**상태**는 요청에 따라 변화하는 값이며, 그 변화가 프로그램의 동작에 반영된다. 이전 요청에서의 상태 변경은 이후 요청의 결과에 영향을 줄 수 있고, 이처럼 상태는 시간에 따라 변하며 일종의 라이프사이클을 가진다. **상태**의 변화는 보통 도메인 정책에 따라 정해진 사이드 이펙트를 유발한다. 예를 들어, 상품 재고 수량을 차감하거나 결제 상태를 변경하는 등의 동작이 이에 해당한다. 하지만 이처럼 사이드 이펙트를 수반하는 상태 관리는 프로그램의 복잡도를 높이며, 예측하기 어렵고 테스트하기 어려운 코드를 만들기도 한다. 그래서 우리는 이러한 상태를 도메인 정책에 따라 일관되게 관리하는 기법을 ' **상태 관리(State Management)** '라고 부른다.
+
+리액트에서 **상태**란 무엇일까? 호기심이 많은 사람이라면 `useState` 대신 일반 변수에 **값**을 직접 할당해 리렌더링을 유도해보려 했을 것이다. **상태**도 결국 **값**의 일종이기 때문에, 단순히 변수에 **값**을 할당하고 바꾸면 UI에 반영될 것처럼 보이기도 한다. 실제로 변수의 **값**이 바뀌고 우연히 리렌더링이 발생한 경우, 해당 값이 UI에 반영되는 걸 본 적도 있을 것이다. 하지만 단순한 변수의 **값**과 리액트의 **상태**는 분명히 다르다. 리액트에서 **상태(state)** 란, UI를 결정짓는 값이며, 그 **값**이 변경되었을 때 컴포넌트를 다시 렌더링하게 만드는 트리거 역할을 한다. 따라서 **상태**를 변경할 때는 반드시 `useState`의 setter 함수처럼, 리액트에게 "상태가 바뀌었다"고 알려주는 방식으로 처리해야 한다. 즉, 어떤 **값**이 UI에 반영됐다고 해서 그 값이 **상태**인 것은 아니다. 상태 변경 함수(setter)를 통해 리액트가 리렌더링을 수행했기 때문에 우연히 UI에 반영된 것이다. 이는 상태 변경에 따른 사이드 이펙트의 결과이지, **값** 자체가 **상태**여서 자동으로 반영된 것이 아니다.
+
+```tsx
+import { useState } from "react";
+
+let value = 0; // 단순한 값은 아무리 변화시켜도 리렌더를 만들지 않는다
+
+function App() {
+  const [count, setCount] = useState(0);
+  // setCount를 호출하면 이 컴포넌트가 다시 호출되면서 변화된 State를 반영해서 새로 그린다
+
+  return (
+    <div>
+      <button
+        onClick={() => {
+          setCount((prev) => prev + 1);
+          value++;
+        }}
+      >
+        카운트 업
+      </button>
+      <div>{`count: ${count}`}</div>
+      <div>{`value: ${value}`}</div>
+    </div>
+  );
+}
+
+export default App;
+```
+
+그렇다면 리액트의 **상태 관리**란 무엇일까? 많은 사람들이 **상태**와 **상태 관리**를 혼용하지만, 사실 이 둘은 명확히 구분된다. **상태**는 그 자체로 UI를 결정짓는 값을 의미한다. 반면, **상태 관리**는 그 값이 도메인 정책에 따라 언제, 어떻게 바뀌어야 하는지를 정의하고 제어하는 로직 전체를 말한다. 작게는 컴포넌트 내부의 상태 변화에 도메인 규칙을 적용하는 것부터, 크게는 애플리케이션 전체에 영향을 미치는 전역 상태까지,이 모든 흐름과 책임을 포함하는 것이 바로 **상태 관리**다.
+
+우리가 쓰고있는 Zustand, Jotai, React Query, Redux 이런 상태관리 도구들은 복잡한 상태 변경이 정확한 사이드 이펙트와 함께 예측 가능하게 일어나도록 돕기 위해 사용된다. 이처럼 다양한 도구들이 존재하는 이유는, 상태의 종류와 성격이 각각 다르기 때문에, 그에 맞는 다른 접근 방식이 필요하기 때문이다.
+
+리액트 상태는 크게는 범위로 나눠볼 수 있고 세세하게 나눠 보자면 관심사의 측면에서 다시 나눠볼 수 있다. **범위**의 측면에서 본다면 **State**가 몇몇 컴포넌트에 국한되서 영향을 주는 **로컬 상태**와 프로젝트 전체에 영향을 줄 수 있는 **전역 상태**로 나뉜다. **전역 상태**는 다시 관심사에 측면에 따라서 UI에 영향을 주는 **UI 상태**와 서버에서 영향을 받는 **캐싱된 서버 상태**로 나눠 볼 수 있다. 이에 따라 상태 관리 하는 법들을 생각해보자
+
+## 로컬 상태 관리
+
+---
+
+**상태**는 관련 컴포넌트들과 최대한 가까이 배치 되는게 좋다. ( [**State Colocation will make your react app faster**](https://ideveloper2.dev/blog/2019-10-12--state-colocation-will-make-your-react-app-faster/) ) **상태**가 관련 컴포넌트와 멀어질수록 상태와 컴포넌트 사이에 있는 관련 없는 컴포넌트의 리렌더까지 일으킬 위험이 크다. 또 **상태**들은 관심사에 따라 잘 분리가 되야 후에 코드 수정시 사이드 이펙트를 최소화 할 수 있다. 서로 관련 없는 컴포넌트들의 **상태**가 한번에 관리되면 결합도가 높아지게 되고 후에 어플리케이션이 비대화 될수록 의도치 않은 영향을 줄 수 있는 가능성이 높아진다. 코드들은 격리되어 있지 않아 코드의 재사용성 또한 떨어진다. 이에 따라 안정적인 리액트 상태 관리를 위해 **전역 상태** 보단 **로컬 상태** 사용을 지향 해야 한다.
+
+**로컬 상태**는 `useState` 훅을 통해 선언되며, 해당 컴포넌트에서 선언된 상태는 자기 자신과 하위(자식) 컴포넌트에 영향을 준다. 이 상태가 변경되면, 리액트는 해당 컴포넌트와 그 하위 트리 전체를 리렌더링한다. 즉, 자식 컴포넌트의 상태나 의도와는 무관하게 전파되는 리렌더링이 일어날 수 있다. 리액트는 기본적으로 정확한 UI 동기화를 우선시하며, **성능 최적화는 개발자가 명시적으로 수행**해야 할 책임으로 남겨둔다.
+
+해당 **로컬 상태**가 해당 위치에 선언된 이유는 다양하다.
+
+- 컴포넌트 스스로가 UI를 그리기 위해 직접 사용하는 상태
+- 제어 역전(inversion of control)을 위해 상위 컴포넌트에서 상태를 통제하는 구조
+- 다수의 자식 컴포넌트에게 영향을 미치는 공통의 상태
+
+위의 경우 중 **다수의 자식 컴포넌트에게 영향을 미치는 공통의 상태**는 자식의 자식의 자식까지 영향을 미치기 위해 최상단부터 최하단 까지 내려가는 경우도 많다. 이 전달이 여러 단계(자식 → 자식의 자식 → 그 자식...)로 이어질 때, 이를 **Props Drilling**이라고 부른다. 특히, 최상위 컴포넌트에 많은 비즈니스 로직이 몰려 있는 경우, 하위로 내려가는 props가 많아지면서 의도를 알기 어려운 props가 중간 컴포넌트들에 퍼지게 되고, 이는 결국 유지보수를 어렵게 만든다.
+
+## **Props Drilling** 을 제어하는 법들
+
+---
+
+### **의미 있는 Props 선언하기**
+
+리액트는 선언형 프로그래밍 형태로 구성된다. 선언형을 통해서 가독성, 재사용성, 유지보수성을 높인다. Props 선언도 이와 같은 맥락으로 이루어져야 한다.
+
+```tsx
+<Button color="blue" size="large" disabled />
+```
+
+color, size, disabled 등 명확하게 Button의 관점에서 어떻게 그릴 것인지 표현하게 된다. Button 같은 최하단 컴포넌트는 명확하게 Props를 선언하기 쉽지만 Prop drilling의 중간 단계에 있는 컴포넌트는 이와 같이 명확하게 Props를 선언하는 게 쉽지않다.
+
+**[선언형의 의미가 약한 Prop 전달 예시]**
+
+```tsx
+const App = () => {
+  const user = useUser();
+  const members = useMembers();
+
+  // Layout의 props 정보만으로는 데이터의 사용처를 알기 어렵고,
+  // 이를 파악하려면 Layout 내부 구현을 직접 열어봐야 한다.
+  return (
+    <Layout
+      userName={user.name}
+      members={members}
+      title={"띠비 채팅방"}
+      count={members.count}
+    />
+  );
+};
+
+const Layout = ({ userName, members, title, count }) => {
+  // Layout 내부에서도 props 간의 의미나 사용처가 불명확하다.
+  return (
+    <div>
+      <Title text={title} count={count} />
+      <MemberList members={members} />
+      <Sidebar userName={userName} />;
+    </div>
+  );
+};
+
+const MemberList = ({ members }) =>
+  members.map(({ member }) => <MemberItem member={member} />);
+
+const MemberItem = ({ member }) => (
+  <div>
+    <img src={member.profileImage} />
+    <span>{member.name}</span>
+  </div>
+);
+
+const Sidebar = ({ userName }) => {
+  return <Profile name={userName} />;
+};
+
+const Profile = ({ name }) => <p>Hello, {name}</p>;
+```
+
+이 코드에서는 전달되는 Props들이 **무엇에 사용되는지** 한눈에 파악하기 어렵다. 결국 Layout 컴포넌트의 내부를 열어봐야만 전체 흐름을 이해할 수 있게 된다.
+
+**[선언형의 의미를 살려본 Prop 전달 예시]**
+
+```tsx
+const App = () => {
+  const user = useUser();
+  const members = useMembers();
+
+  const sideBarProps = {
+    userName: user.name,
+  };
+
+  const memberListProps = {
+    items: members.map((member) => ({
+      profileImage: member.profileImage,
+      name: member.name,
+    })),
+  };
+
+  // 최상위에서부터 props의 목적이 구조적으로 명확하게 드러난다.
+  return (
+    <Layout
+      sidebar={sideBarProps}
+      memberList={memberListProps}
+      title={"띠비 채팅방"}
+    />
+  );
+};
+
+const Layout = ({ title, sidebar, memberList }) => {
+  // Layout 내부에서도 각 props의 역할이 구분되어 있어 이해하기 쉽다.
+
+  return (
+    <div>
+      <Title text={title} count={memberList.length} />
+      <MemberList {...memberList} />
+      <Sidebar {...sidebar} />;
+    </div>
+  );
+};
+
+const MemberList = ({ members }) =>
+  members.map(({ member }) => <MemberItem member={member} />);
+
+const MemberItem = ({ member }) => (
+  <div>
+    <img src={member.profileImage} />
+    <span>{member.name}</span>
+  </div>
+);
+
+const Sidebar = ({ userName }) => {
+  return <Profile name={userName} />;
+};
+
+const Profile = ({ name }) => <p>Hello, {name}</p>;
+```
+
+이처럼 **의미 단위로 Props를 묶어 전달**하면, Props의 목적이 명확해지고 중간 컴포넌트에서도 코드의 **선언형 구조**를 유지할 수 있습니다.
+
+⚠️ **memo 사용해서 리렌더 방지 시 주의할 점**
+
+props를 객체 형태로 묶어 전달하는 경우, `React.memo`를 활용해 최적화하고자 할 때 **주의할 점**이 있다.
+
+```tsx
+const sideBarProps = { userName: user.name };
+```
+
+위 코드는 `App`이 리렌더될 때마다 `sideBarProps` 객체가 새로 생성되므로 `React.memo`를 적용해도 **불필요한 재렌더링**이 발생할 수 있다. 왜냐하면 `memo`는 **얕은 비교**만 수행하기 때문이다. 이 문제를 해결하려면 `useMemo`를 사용해 props 객체를 메모이제이션 해야 한다.
+
+```tsx
+const sideBarProps = useMemo(() => ({ userName: user.name }), [user.name]);
+
+const memberListProps = useMemo(
+  () => ({
+    items: members.map((member) => ({
+      profileImage: member.profileImage,
+      name: member.name,
+    })),
+  }),
+  [members]
+);
+```
+
+이렇게 하면 `user.name`이나 `members`가 변경되지 않는 이상,불필요하게 새로운 객체를 만들지 않게 되어 `React.memo`의 효과가 제대로 발휘된다.
+
+### **Context API로 Props 구출하기**
+
+**Context API**를 일종의 전역 상태 관리 라이브러리의 대체 기술로 생각하는 사람도 많다. (일단 나부터!) 하지만 정확히 말하면, **Context API**는 단순한 상태 전달 도구에 가깝다. 전역 상태 관리 라이브러리들은 보통 도메인 정책에 따라 상태의 흐름과 변경 로직을 체계적으로 관리할 수 있도록 구성되어 있다. 반면, **Context API**는 상태를 "어떻게 변경할지"에 대한 로직은 제공하지 않고, 단순히 값을 컴포넌트 트리 아래로 전달하는 역할만 한다.
+
+하지만 단순히 로컬 상태를 하위 컴포넌트에 전달하는 용도라면, **Context API**는 **Props drilling** 문제를 해결하는 매우 유용한 도구가 될 수 있다. Props를 통한 상태 전달은, 부모 컴포넌트에서 내려온 값을 자식 컴포넌트가 UI에 반영하기 위해 사용된다. 하지만 상태가 여러 단계의 컴포넌트를 거쳐 전달되어야 하는 경우, 중간 컴포넌트들은 그 값을 사용하지 않더라도 Props만 받아서 전달해주는 역할만 하게 된다. **Context API**를 사용하면 중간 컴포넌트를 거치지 않고, 필요한 자식 컴포넌트에 직접 값을 주입할 수 있기 때문에 **Props drilling** 문제를 깔끔하게 해결할 수 있다.
+
+```tsx
+const UserContext = createContext();
+const MemberContext = createContext();
+
+const App = () => {
+  const user = useUser();
+  const members = useMembers();
+
+  return (
+    <MemberContext.Provider value={{ members }}>
+      <UserContext.Provider
+        value={{
+          user,
+        }}
+      >
+        <Layout title="띠비 채팅방" />
+      </UserContext.Provider>
+    </MemberContext.Provider>
+  );
+};
+
+const Layout = ({ title }) => {
+  const members = useContext(MemberContext);
+  return (
+    <div>
+      <Title text={title} count={members.length} />
+      <MemberList />
+      <Sidebar />
+    </div>
+  );
+};
+
+const MemberList = () => {
+  const members = useContext(MemberContext);
+  return members.map((member, idx) => <MemberItem key={idx} member={member} />);
+};
+
+const MemberItem = ({ member }) => (
+  <div>
+    <img src={member.profileImage} />
+    <span>{member.name}</span>
+  </div>
+);
+
+const Sidebar = () => {
+  return <Profile />;
+};
+
+const Profile = () => {
+  const user = useContext(UserContext);
+  return <p>Hello, {user.name}</p>;
+};
+```
+
+하지만 **Context API**를 사용할 때는 주의할 점도 있다. **Context**를 사용하는 컴포넌트는 반드시 해당 **Context**의 **Provider** 내부에서 렌더링되어야 하며, **Provider** 없이 렌더링될 경우 정의되지 않은 값을 참조하거나 에러가 발생할 수 있다. 이로 인해 컴포넌트의 재사용성이 떨어질 수 있으며, 컨텍스트에 의존하는 컴포넌트가 많아질수록 구조가 복잡해지고 추적이 어려워지는 단점도 존재한다.
+
+### **합성이나 RenderProp를 사용해보자**
+
+따로 Props를 내리지 않고 미리 최상단에서 원하는 자식 컴포넌트를 그려서 내리는 방법도 있다.
+
+```tsx
+const App = () => {
+  const user = useUser();
+  const members = useMembers();
+
+  return (
+    <Layout
+      sidebar={<Sidebar userName={user.name} />}
+      memberList={
+        <MemberList
+          items={members.map((member) => ({
+            profileImage: member.profileImage,
+            name: member.name,
+          }))}
+        />
+      }
+      title={"띠비 채팅방"}
+    />
+  );
+};
+
+const Layout = ({ title, sidebar, memberList }) => {
+  return (
+    <div>
+      <Title text={title} count={memberList.length} />
+      {memberList}
+      {sidebar}
+    </div>
+  );
+};
+```
+
+이렇게 하면 굳이 불필요한 Props를 최하단까지 내리지 않고 원하는 컴포넌트에 Props를 주입한채로 Props로 내리면 되기 때문에 Prop drilling 문제가 완화 된다.
+
+### **Props Getter를 사용해보자**
+
+**Props drilling**이 발생하는 근본적인 원인 중 하나는 **도메인 정책 판단이 최하단 컴포넌트에서 이루어지는 구조** 때문이다. 정책 판단은 보통 **최상위에서 한 번만 처리되면 되는 일**인데, 이를 하위 컴포넌트에서 처리하게 되면 해당 판단에 필요한 모든 정보를 중간 컴포넌트를 거쳐 Props로 전달해야 다. 이로 인해 **Props drilling**이 발생한다.
+
+이럴 때, **정책 판단은 상위에서 수행하고, 하위에서는 결과만 사용하는 구조**로 바꾸면 Props 전달을 간결하게 만들 수 있다.
+
+이 구조에서 유용하게 쓰이는 방식이 바로 Props getter 패턴이다.
+
+**[하위 컴포넌트에서 정책 로직을 처리하기 위해 props 주입한 예시]**
+
+```tsx
+const App = () => {
+  const user = useUser();
+  const members = useMembers();
+  const chat = useChat();
+
+  return <Layout user={user} members={members} chat={chat} />;
+};
+
+const Layout = ({ user, members, chat }) => {
+  return (
+    <div>
+      <MemberList members={members} user={user} chat={chat} />
+    </div>
+  );
+};
+
+const MemberList = ({ members, user, chat }) =>
+  members.map(({ member }) => (
+    <MemberItem member={member} user={user} chat={chat} />
+  ));
+
+const MemberItem = ({ member, user, chat }) => {
+  // 메시지를 생성하기 위해 user와 chat props를 받아야 함
+  // 그러나 이 로직은 사실 상위에서 판단해도 되는 도메인 정책임
+  const [show, setShow] = useState(false);
+
+  return (
+    <div onClick={() => setShow(true)}>
+      <img src={member.profileImage} />
+      <span>{member.name}</span>
+      {show && `${user.name}가 ${chat.name}에서 ${member.name}를 눌렀다`}
+    </div>
+  );
+};
+```
+
+이 구조는 `user`, `chat`을 단순히 **문장 생성**에만 사용하지만, 모든 중간 컴포넌트에서 해당 데이터를Props로 넘겨줘야 하는 부담이 있다. 이로 인해 **컴포넌트 간 결합도**가 높아지고 **유지보수성**이 떨어진다.
+
+**[Props getter로 하위 컴포넌트에서 정책 로직을 상위로 올린 예시]**
+
+```tsx
+const App = () => {
+  const user = useUser();
+  const members = useMembers();
+  const chat = useChat();
+
+  // 도메인 정책 로직을 App에서 한 번에 처리
+  const getMessage = (memberName) =>
+    `${user.name}가 ${chat.name}에서 ${memberName}를 눌렀다`;
+
+  return <Layout members={members} getMessage={getMessage} />;
+};
+
+const Layout = ({ members, getMessage }) => {
+  return (
+    <div>
+      <MemberList members={members} getMessage={getMessage} />
+    </div>
+  );
+};
+
+const MemberList = ({ members, getMessage }) =>
+  members.map(({ member }) => (
+    <MemberItem member={member} getMessage={getMessage} />
+  ));
+
+const MemberItem = ({ member, getMessage }) => {
+  const [show, setShow] = useState(false);
+  const message = getMessage(member.name);
+
+  return (
+    <div onClick={() => setShow(true)}>
+      <img src={member.profileImage} />
+      <span>{member.name}</span>
+      {show && message}
+    </div>
+  );
+};
+```
+
+위 방법으로 `MemberItem`은 이제 `user`와 `chat`에 대한 의존성이 없다. 오직 `getMessage`함수 하나 만으로 필요한 메시지를 생성할 수 있다.
+
+## 전역 상태 관리
+
+---
+
+### **전역 상태는** 언제 필요한가
+
+[리액트 컴포넌트 설계에 대하여](https://www.stevy.dev/react-design-guide) 에서는 “전역 상태는 독이다” 라고 다뤘다. 전역 상태를 사용하게되면 사용이 쉬운 만큼, 의존성과 복잡도, 사이드 이펙트의 위험도 함께 증가한다. 일반적인 경우 상태는 **전역 상태**보다 관련 컴포넌트 가까운 **로컬 상태**로서 관리되는게 권장된다. **Prop Drilling** 과 같은 이슈도 위에서 소개한 방법들로 해결 가능하다. 하지만 **페이지 전반으로 관리되는 컴포넌트**인 경우 **로컬 상태**로서 관리 되기 어려울 수도 있다. 이를테면 컨텍스트 메뉴, 팝업등의 컴포넌트가 그에 해당한다. 이때는 **전역 상태**를 이용하는것도 좋다. 또, 언어나 다크 모드같은 변화가 잦지 않고 서비스 전반에 걸친 상태도  **전역 상태**를 이용 할 수 있다. 상태는 본인의 기준에 의해 개발자가 설계하게 되는 것이며 뭐든 절대적인 것은 없다. 하지만 한번 설계된 상태는 어플리케이션의 코드 라이프 사이클 동안 계속 다뤄지는 부분이기 때문에 신중해야한다.
+
+### 리액트 쿼리를 쓰는 이유
+
+과거에는 호출 된 데이터를 서버 캐싱을 위해서 전역 상태 관리 라이브러리를 쓰는 경우가 많았다. **Redux**에서는 비동기 API 호출을 전역 상태에 담기위해서 **redux-thunk**, **redux-saga** 등 미들웨어 라이브러리들이 쓰이고 있었다. 하지만 본질적으로 **서버 캐시**와 **UI 상태**는 다르다. **서버 캐싱** 되는 데이터는 본래 서버에 저장되어 있고 빠른 접근을 위해 클라이언트에 저장하는 상태이다. 예를 들면 서버에서 가져오는 유저 데이터 등이 있다. 반면, **UI 상태**는 오로지 우리 앱의 인터렉션을 제어하기 위한 UI에서만 유용한 상태다. 예를 들면, Modal의 isOpen 과 같은 데이터이다. 둘은 섞이면 안되고 본질에 따른 분리가 필요하다.
+
+또, **전역 상태 관리 라이브러리**에서 **서버 상태**를 캐싱을 하게되면 **서버 상태**가 특정 시점에 **캡쳐** 되버린다. 서버 데이터를 캐싱한 클라이언트의 상태를 인터렉션에 따라 update해서 서버 데이터와 동기화 한다고 하여도 시간이 지남에 따라서 본질적으로는 다른 데이터가 되고 관리도 어렵다.
+
+전역 상태 라이브러리에서 **서버 상태**를 캐싱 하기 위해서 전역에서 호출이 강제 될 수 있다. **전역 상태**에서 서버 데이터를 저장하기 위해서 미리 초기화 시점에 최상단 컴포넌트에서 호출을 해서 저장을 하기 때문에 데이터를 쓰는 시점과 데이터를 호출 하는 시점이 달라 질 수 있다. 이는 데이터에 접근하는 시점에 데이터가 있음을 보장할 수 없게 되고 애플리케이션의 크기가 커지면 커질수록 데이터의 흐름을 따라가기 힘들게 된다.
+
+전역 상태에서 서버 상태를 관리하지말고 **React-Query** 등과 같은 서버 캐싱 전용 라이브러리를 사용해야한다. 서버 캐싱은 아주 어려운 작업이다. **custom hooks**를 만들어서 따로 넣을수도 있겠지만 진정한 캐싱의 개념을 쓰기 위해서는 라이브러리의 도움을 받는게 좋다. 주기적으로 정해진 시점에 따라 데이터가 **out-of-date**이 되지않게 서버 데이터를 **polling**을 하고 에러가 나면 영리하게 재호출 할수도 있다. 서버 응답을 메모리에 캐싱하면서 재검증 로직과 함께 비용을 줄인다. 또 원하는 시점에 호출을 하기 때문에 해당 데이터를 이용하는 컴포넌트에서 직접 호출을 하게된다. 전역 컴포넌트의 상태로부터 독립된 컴포넌트는 재사용이 가능하게 된다.
+
+### 최근의 전역 상태관리 트렌드 라이브러리
+
+과거에는 **Redux**가 전역 상태 관리의 **표준**처럼 쓰이던 시기가 있었다. **Redux**는 안정적인 상태 유지를 위해 **강한 제약을 요구하는 구조**를 택한다.
+
+**Redux**의 핵심은 다음 세 가지를 명확히 분리한다:
+
+- 어플리케이션 상태 (state)
+- 무엇이 일어났는지 (dispatch를 통한 action 발생)
+- 어떻게 상태를 바꿀 것인지 (reducer를 통한 변경)
+
+이 구조는 Flux 패턴 기반의 **단방향 데이터 흐름**을 따르며, 예측 가능한 상태 관리를 가능하게 한다.
+
+하지만 이러한 구조는 다음과 같은 문제점이 있다:
+
+- 간단한 기능 하나 추가할 때도
+  action → dispatch → reducer → state → selector까지 수정이 필요
+- 상태 관리 자체가 **비대해지고 장황**해짐
+- 프로젝트 규모가 커질수록 **복잡도**와 **확장성 저하** 문제 발생
+
+이러한 문제를 해결하고자, **Daishi Kato**라는 일본 개발자가 **가볍고 선언적인 상태 관리 라이브러리**들을 연이어 출시한다.
+
+- Jotai (원자 단위 상태)
+- Zustand (함수 기반 글로벌 스토어)
+- Valtio (프록시 기반 상태 추적)
+
+세 라이브러리는 **Redux**의 무거움을 벗어난 **실용적인 상태 관리 도구**들이고 최근 트렌드가 되고 있다.
 
 <Image
-  src="/images/propdrill.png"
-  alt="PropDrilling"
+  src="/images/state-trend.png"
+  alt="리액트 전역 상태 관리 트렌드"
   width={500}
   height={500}
 />
 
-&nbsp; 2014년, 페이스북은`MVC 패턴`의 대안으로 `단방향`으로 데이터 흐름 진행되는 `Flux 패턴`을 공개 했다. `Flux 패턴`은 `MVC 패턴`에 있던 `상태의 전이`(뷰와 모델 사이의 데이터 변경이 연결된 수많은 곳으로 따라 변경되는 현상) 현상을 없애주고 `예측 가능`하다는 특징이있다.
+여전히 Redux가 가장 많이 쓰이고 있지만 무서운 속도로 따라잡고있다. 만들어진 철학이 모두 다르기 때문에 취향에 맞게 취사 선택도 가능하다. (필자는 참고로 Zustand를 선호한다.)
 
-<Image src="/images/flux.png" alt="Flux" width={500} height={500} />
+### 마무리
 
-&nbsp; 뷰 라이브러리의 발전과 함께 상태가 복잡한 웹 어플리케이션들이 생겨났고 고도화된 전역 상태 관리에 대한 필요성이 생기고 있었다. 2015년에는 Dan Abramov에 의해서 `React` + `Flux`의 구조에 `Reducer`를 결합한 `Redux`가 등장했다. `Redux`는 리액트, 앵귤러, 바닐라 js든 다 이용이 가능한 라이브러리이고 리액트와는 `react-redux`를 이용해서 바인딩 된다. `Redux`는 리액트의 `Prop Drilling` 문제와 여러 복잡해지는 상태 공유에 따른 컴포넌트간 의존성 문제를 해결할 대안으로 떠올랐고 금세 상태 관리 라이브러리의 대세가 되었다.
+이 글 역시 [「리액트 컴포넌트 설계에 대하여」](https://www.stevy.dev/react-design-guide) 와 마찬가지로, 4년 만에 다시 쓰게 된 글이다. 그동안 리액트 컴포넌트 생태계도 많은 변화가 있었지만, 상태 관리는 그보다 더 큰 변화와 전환점을 맞이한 영역처럼 느껴진다. 이제는 신규 프로젝트에서 Redux가 사용되는 경우가 드물고, 많은 개발자들이 전역 상태보다 로컬 상태를 우선시하는 흐름도 확연히 자리 잡았다.
 
-&nbsp; 그후 리액트 `Hooks`가 나왔고 `Context API`를 이용해서 `Prop Drilling` 문제 해결, 역할에 따른 `상태 분리` 등이 가능해졌다. `React Query`, `SWR` 등이 나와서 기존에 `Redux`에 캐싱되어있던 서버 상태를 분리해서 캐싱 하고 있고 최근 리액트 팀은 리액트 전용 전역 라이브러리인 `Recoil`을 개발중에 있다.
-
-<Image src="/images/context.png" alt="Context" width={500} height={500} />
-
-## 좋은 리액트 상태 관리란 뭘까
-
----
-
-&nbsp; `State`는 관련 컴포넌트들과 최대한 가까이 배치 되는게 좋다. ( [State Colocation will make your react app faster](https://ideveloper2.dev/blog/2019-10-12--state-colocation-will-make-your-react-app-faster/) ) `State`가 관련 컴포넌트와 멀어질수록 상태와 컴포넌트 사이에 있는 관련 없는 컴포넌트의 리렌더까지 일으킬 위험이 크다. 또 `State`들은 관심사에 따라 잘 분리가 되야 후에 코드 수정시 사이드 이펙트를 최소화 할 수 있다. 서로 관련 없는 컴포넌트들의 상태가 한번에 관리되면 결합도가 높아지게 되고 후에 어플리케이션이 비대화 될수록 의도치 않은 영향을 줄 수 있는 가능성이 높아진다. 코드들은 격리되어 있지 않아 코드의 재사용성 또한 떨어진다.
-
-### 전역 상태의 문제점
-
-&nbsp; `Redux` 같은 전역 상태 라이브러리를 꼭 써야되는지 고려해봐야 한다. 전역 상태를 이용한다면 전역 `State`가 바뀔때마다 리렌더가 일어날 수 있다. (이를 최적하기 위한 `react-redux`의 권장 사항과 `redux hooks`들도 있다.) `Reducer`를 역할에 맞게 쪼갤수도 있지만 결국 하나의 `State`에서 관리되고 내가 보낸 `Dispatch`는 모든 `Reducer`를 통하게 되기 때문에 상태의 관심사에 따른 분리가 제대로 일어나고 있는지도 의문이다.
-
-### Redux의 한계
-
-&nbsp; `Redux`는 안정적인 상태 유지를 위해서 강한 제약을 요구한다. "무엇이 일어나는가"와 "어떻게 바꾸는가"를 분리하기 위해 빙 돌아가는 방식을 추가하는 것이 `Redux`가 제안하는 요구사항이다. 어플리케이션 상태 / 무엇이 일어나는 지 / 어떻게 바꾸는 지 구분 해서 개발 해야한다. 무엇이 일어나는지는 `dispatch`를 이용해서 알리며 어떻게 바꿀지는 `reducer`를 이용해서 `state`를 조작한다. `Flux` 패턴을 이용해서 단방향 흐름으로 안정적인 상태 운용이 가능하지만 원하는 상태와 기능추가를 위해서는 `dispatch`를 위한 `action`, 상태 변화를 위한`reducer`, 컴포넌트에서 `state`를 가져다 쓰는 부분 모두 손봐야 하기 때문에 너무 장황하다. 어플리케이션이 비대화 될수록 이런 상태 관리 사이클 관리를 위한 코드의 복잡도가 심화되어서 확장성도 떨어진다.
-
-### 서버 캐싱을 전역 상태 라이브러리로 하면 안되는 이유
-
-&nbsp; 서버 캐싱을 위해서 전역 상태 라이브러리를 쓰는 경우가 많다. `Redux`에서는 비동기 API 호출을 전역 상태에 담기위해서 `redux-thunk`, `redux-saga` 등 미들웨어 라이브러리들이 쓰이고 있다. 하지만 본질적으로 `서버 캐시`와 `UI 상태`는 다르다. `서버 캐싱` 되는 데이터는 본래 서버에 저장되어 있고 빠른 접근을 위해 클라이언트에 저장하는 상태이다. 예를 들면 서버에서 가져오는 유저 데이터 등이 있다. 반면, `UI 상태`는 오로지 우리 앱의 인터렉션을 제어하기 위한 UI에서만 유용한 상태다. 예를 들면, Modal의 isOpen 과 같은 데이터이다. 둘은 섞이면 안되고 본질에 따른 분리가 필요하다.
-
-&nbsp; 또, `전역 상태`에서 `서버 상태`를 캐싱을 하게되면 `서버 상태`가 특정 시점에 `캡쳐` 되버린다. 서버 데이터를 캐싱한 클라이언트의 상태를 인터렉션에 따라 update해서 서버 데이터와 동기화 한다고 하여도 시간이 지남에 따라서 본질적으로는 다른 데이터가 되고 관리도 어렵다.
-
-&nbsp; 전역 상태 라이브러리에서 `서버 상태`를 캐싱 하기 위해서 전역에서 호출이 강제 될 수 있다. `전역 상태`에서 서버 데이터를 저장하기 위해서 미리 초기화 시점에 최상단 컴포넌트에서 호출을 해서 저장을 하기 때문에 데이터를 쓰는 시점과 데이터를 호출 하는 시점이 달라 질 수 있다. 이는 데이터에 접근하는 시점에 데이터가 있음을 보장할 수 없게 되고 애플리케이션의 크기가 커지면 커질수록 데이터의 흐름을 따라가기 힘들게 된다.
-
-&nbsp; 전역 상태에서 서버 상태를 관리하지말고 `SWR`, `React-Query` 등과 같은 서버 캐싱 전용 라이브러리를 사용해야한다. 서버 캐싱은 아주 어려운 작업이다. `custom hooks`를 만들어서 따로 넣을수도 있겠지만 진정한 캐싱의 개념을 쓰기 위해서는 라이브러리의 도움을 받는게 좋다. 주기적으로 정해진 시점에 따라 데이터가 `out-of-date`이 되지않게 서버 데이터를 `polling`을 하고 에러가 나면 영리하게 재호출 할수도 있다. 서버 응답을 메모리에 캐싱하면서 재검증 로직과 함께 비용을 줄인다. 또 원하는 시점에 호출을 하기 때문에 해당 데이터를 이용하는 컴포넌트에서 직접 호출을 하게된다. 전역 컴포넌트의 상태로부터 독립된 컴포넌트는 재사용이 가능하게 된다.
-
-> _Redux 진영 에서도 21년 6월부터 Redux 툴킷에 RTK Query라는 모듈을 새로 추가 했습니다. API 호출 캐싱을 기존의 전역 상태관리와 분리해서 관리 할 수 있게 지원하고 있습니다_ [관련 글](https://medium.com/@kolbysisk/react-state-management-in-2022-return-of-the-redux-87218f56486b) _( 2021.12.07 추가한 글 )_
-
-## 리액트 전역 UI 상태 관리
-
----
-
-### 전역 상태 언제 필요할까
-
-&nbsp; 위에서 다룬 것 같이 일반적인 경우 상태는 `전역 상태`보다 관련 컴포넌트 가까운 `지역 상태`로서 관리되는게 권장된다. `Prop Drilling` 과 같은 이슈도 간단하게는 [리액트 함수 합성](https://www.notion.so/a1ed23b1674a4cb482a2bdb6e278281d)을 이용해서 해결 가능하다. 하지만 다수의 컴포넌트간에 상태 의존성이 높아진다면 `지역 상태`로서 관리 되기 어려울 수도 있다. 이때는 `전역 상태`를 이용하는것도 좋다. 또, 언어나 다크 모드같은 변화가 잦지 않고 서비스 전반에 걸친 상태면 `전역 상태`를 이용 할 수 있다. 상태는 본인의 기준에 의해 개발자가 설계하게 되는 것이며 뭐든 절대적인 것은 없다. 하지만 한번 설계된 상태는 어플리케이션의 코드 라이프 사이클 동안 계속 다뤄지는 부분이기 때문에 신중해야한다.
-
-### 전역 상태 관리한다면 꼭 Redux 여야 할까
-
-<Image
-  src="/images/reduxpopular.png"
-  alt="reduxpopular"
-  width={500}
-  height={500}
-/>
-
-- 한번 자리 잡은 Redux의 인기는 여전하다
-
-&nbsp; 위에서 다룬 것 처럼 `Redux`는 한계가 있음에도 여전히 가장 많이 쓰이는 상태관리 라이브러리이며 대다수의 리액트 프로젝트에는 `Redux`로 전역 상태가 관리 되고 있다. 인기가 가장 많기 때문에 강한 생태계를 구축하고 있어서 tool도 많고 미들웨어도 많이 존재한다. `Recoil`과 `Jotai`와 다르게 SSR 까지 지원되고 있다. `Flux` 패턴을 이용한 선언적이고 안정적인 상태 운용을 원한다면 `Redux`를 이용해도 된다. `Redux`도 기존의 장황한 확장성을 고치기 위해 `Redux Tools`라는 새로운 기능을 만들어서 한번에 무엇을 어떻게 할지 정의할수 있게 했다. 이를 통해 좀더 간결하게 상태 관리 할 수 있도록 개선 되었다.
-
-### 간단한 대안 Context API
-
-&nbsp; 리액트 hooks가 나오면서 비대한 `Redux`대신 `Context`를 활용해서 개발하는 게 권장 되고 있다. `Context`는 수단일 뿐 사실상 상태관리 자체는 리액트 컴포넌트의 `useState`와 `useReducer` 로 하게 된다. 역할에 맞게 여러 `Provider`를 쪼개서 관리 할 수 있고 또 관련된 컴포넌트 들의 상위에 `Provider`를 감싸면 되기 때문에 전역 상태가 최상단에 위치하는 `Redux`보다 가까이서 상태를 관리 할 수 있게된다.
-
-하지만 `Context`도 문제가 있다. `Redux`는 의존해서 사용하는 값이 변할때 리렌더링이 되도록 최적화 되어있지만 `Context`의 경우 해당 값 말고 다른 값이 변경될때도 컴포넌트는 재호출 되어서 리렌더링이 발생한다. `Context`를 다룰때에는 꼭 관심사에 따라 모두 다 분리해서 관리 해야한다. 하지만 어플리케이션이 비대화 될수록 관심사가 많아지면 관리하기 어려울정도로 래핑이 많아지는 문제가 있다. 중첩되는 컴포넌트들이 많아지니 성능 이슈도 생긴다.
-
-<Image src="/images/recoil.png" alt="recoil" width={500} height={500} />
-
-- 출처 : 리코일 왕위를 계승하는 중입니다 - 김태곤
-
-&nbsp; 위의 복잡한 `Context` 구조처럼 거대한 프로젝트를 다루기에는 해법으로 제시한 `ContextAPI`도 명확한 한계를 가지기 때문에 리액트 팀은 `Recoil`을 만들기 시작한다
-
-### Recoil
-
-&nbsp; `Recoil`은 `Redux` `MobX`등의 서드파티 라이브러리와 다르게 오직 리액트 만을 위해서 생겨난 라이브러리이다. 서드 파티 라이브러리들은 외부에서 상태를 관리한뒤 `react-redux`등을 통해서 리액트 라이프 사이클에 접근했지만 `Recoil`은 깊은 부분까지 리액트 상태를 직접 다룬다. 페이스북이 직접 개발하기 때문에 장기적으로 [동시성 모드](https://ko.reactjs.org/docs/concurrent-mode-intro.html)나 [Suspense](https://ko.reactjs.org/docs/concurrent-mode-suspense.html) 같은 리액트의 실험적 기능 까지 확대할 목적으로 개발 되고 있다. 서드파티 라이브러리를 쓰게되면 리액트의 내부 스케줄러에는 접근할수 없어서 내부 성능 로직 개선이 어렵게 된다.
-
-<Image src="/images/atomrecoil.png" alt="atomrecoil" width={500} height={500} />
-
-`Recoil`을 쓰게되면 `Atom`이라는 작은 데이터 조각을 만들어서 해당 `State` 변화 시에 이를 참조하는 컴포넌트들만 리렌더를 시키는 단순한 로직으로 되어있다. 아직은 디버깅 Tool들이 미미하고 안정화가 덜되어 있지만 조만간 안정화 되면서 빠른 속도로 `Redux`를 대체할 것으로 보인다.
-
-## 마치며
-
----
-
-&nbsp; 필자가 공부를 시작한 2019년만 하더라도 `Redux` 사용은 거의 강제되었고 많은 프로젝트를 큰 고민 없이 `Redux`로 다뤄 왔었다. 이제는 `Redux`가 아닌 관심사에 따른 상태 분리 같은 것들이 중요시 된다는 걸 느끼면서 프론트 웹 생태의 빠른 변화를 새삼스레 느끼게 되었다. 이제는 전역 상태보다는 지역 별로 잘 분리된 상태관리가 권장되고 있다. 그럼에도 전역 상태 관리가 필요한 상황들이 많기 때문에 만들어지는 `Recoil`이 불러올 또 하나의 리액트 개발 패러다임도 기대해 본다.
-
----
-
-23/07/07 추가 :
-
-- recoil은 페이스북에서 관리를 멈추고 오픈소스화하려는 움직임을 보이고 있다. 4/12일 이후 라이브러리 업데이트가 안되고 있는 것으로 보아 진척이 없어 보인다. 지금 시점에서는 업데이트가 활발히 되고있는 Jotai나 Zustand를 추천한다
-  - [Is the project still maintained?](https://github.com/facebookexperimental/Recoil/discussions/2171)
-
-### 참고글
-
----
-
-[Recoil - 또 다른 React 상태 관리 라이브러리?](https://ui.toast.com/weekly-pick/ko_20200616)
-
-[Recoil: 왕위를 계승하는 중입니다 (새로운 React 상태 관리 라이브러리)](https://tv.naver.com/v/16970954/list/657024)
-
-[당신에게 Redux는 필요 없을지도 모릅니다.](https://medium.com/lunit/%EB%8B%B9%EC%8B%A0%EC%97%90%EA%B2%8C-redux%EB%8A%94-%ED%95%84%EC%9A%94-%EC%97%86%EC%9D%84%EC%A7%80%EB%8F%84-%EB%AA%A8%EB%A6%85%EB%8B%88%EB%8B%A4-b88dcd175754)
-
-[리덕스(Redux)는 왜 쓰는 건데⁉](https://wooder2050.medium.com/%EB%A6%AC%EB%8D%95%EC%8A%A4-redux-%EB%8A%94-%EC%99%9C-%EC%93%B0%EB%8A%94-%EA%B1%B4%EB%8D%B0-2eaafce30f27)
-
-[Redux 를 넘어 SWR 로(1)](https://min9nim.vercel.app/2020-10-03-swr-intro1/)
-
-[전역 상태 관리에 대한 단상 (stale-while-revalidate)](https://jbee.io/react/thinking-about-global-state/)
-
-[Past, Present, and Future of React State Management - Lee Robinson](https://leerob.io/blog/react-state-management?fbclid=IwAR2jI5klYjGLoJXuOLcMIctncQuniOgMQIwmwEIb65T-C3x0-erc86Jvu00)
-
-[단일 진실 공급원 - 위키백과, 우리 모두의 백과사전](https://ko.wikipedia.org/wiki/%EB%8B%A8%EC%9D%BC_%EC%A7%84%EC%8B%A4_%EA%B3%B5%EA%B8%89%EC%9B%90)
-
-[React로 사고하기 - React](https://ko.reactjs.org/docs/thinking-in-react.html)
+그만큼 리액트 생태계가 생산성과 유지보수성을 동시에 만족시키는 방향으로 진화해왔음을 느낄 수 있었다. 리액트에서 상태 관리는 단순한 기술 선택이 아니라, 애플리케이션의 방향성과 수명을 결정짓는 핵심 설계다. 올바른 상태 범위 설정, 관심사의 분리는결국 서비스의 유지보수성과 확장성을 결정짓는 핵심 요소다. 이 글이 상태 관리 설계에 대해 고민하는 분들께 작지만 실용적인 인사이트가 되었기를 바란다.
